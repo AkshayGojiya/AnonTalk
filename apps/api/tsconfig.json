@@ -1,9 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "module": "CommonJS",
-    "moduleResolution": "Node10",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "target": "ES2022",
+    "rootDir": "./src",
     "outDir": "./dist",
     "incremental": true,
     "experimentalDecorators": true,
