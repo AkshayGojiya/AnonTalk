@@ -30,3 +30,6 @@ apps/api/generated/
 # misc
 coverage/
 *.tsbuildinfo
+
+# refs
+docs/
