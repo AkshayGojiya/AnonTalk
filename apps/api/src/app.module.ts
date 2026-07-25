@@ -1,5 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { APP_GUARD } from "@nestjs/core";
+import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { LoggerModule } from "nestjs-pino";
 import { validateEnv } from "./config/env.validation";
 import { PrismaModule } from "./prisma/prisma.module";
@@ -17,6 +19,9 @@ import { ModerationModule } from "./moderation/moderation.module";
     ConfigModule.forRoot({
       isGlobal: true,
       validate: validateEnv,
+    }),
+    ThrottlerModule.forRoot({
+      throttlers: [{ ttl: 60_000, limit: 120 }],
     }),
     LoggerModule.forRoot({
       pinoHttp: {
@@ -37,5 +42,6 @@ import { ModerationModule } from "./moderation/moderation.module";
     BlockingModule,
     ModerationModule,
   ],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

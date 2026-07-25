@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post, Req, Res, UseGuards } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AuthGuard } from "@nestjs/passport";
+import { Throttle } from "@nestjs/throttler";
 import { exchangeTokenSchema } from "@anontalk/shared";
 import type { Request, Response } from "express";
 import { ZodValidationPipe } from "../common/pipes/zod-validation.pipe";
@@ -8,6 +9,9 @@ import { toCurrentUserDto } from "../users/user.mapper";
 import { AuthService } from "./auth.service";
 import type { GoogleProfilePayload } from "./types";
 
+// Stricter than the app-wide default — these endpoints gate login/session issuance,
+// so they're worth protecting against brute-force/abuse specifically.
+@Throttle({ default: { limit: 10, ttl: 60_000 } })
 @Controller("auth")
 export class AuthController {
   constructor(

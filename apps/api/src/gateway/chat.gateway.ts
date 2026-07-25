@@ -24,6 +24,7 @@ import type { Redis } from "ioredis";
 import type { Server } from "socket.io";
 import { REDIS_APP_SUB_CLIENT, REDIS_CLIENT } from "../redis/redis.constants";
 import { FORCE_LOGOUT_CHANNEL, MATCH_CHANNEL, SESSION_ENDED_CHANNEL } from "../redis/pubsub.constants";
+import { RateLimiterService } from "../common/rate-limiter.service";
 import { MatchmakingService } from "../matchmaking/matchmaking.service";
 import { SessionsService } from "../sessions/sessions.service";
 import { UsersService } from "../users/users.service";
@@ -31,6 +32,11 @@ import type { AuthenticatedSocket, ForceLogoutMessage, MatchMessage, SessionEnde
 
 const GRACE_SWEEP_INTERVAL_MS = 3_000;
 const MAX_MATCH_RETRY_DEPTH = 3;
+
+const JOIN_QUEUE_LIMIT = 8;
+const JOIN_QUEUE_WINDOW_SECONDS = 5;
+const SEND_MESSAGE_LIMIT = 20;
+const SEND_MESSAGE_WINDOW_SECONDS = 10;
 
 function room(sessionId: string) {
   return `session:${sessionId}`;
@@ -49,6 +55,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     private readonly matchmakingService: MatchmakingService,
     private readonly sessionsService: SessionsService,
     private readonly usersService: UsersService,
+    private readonly rateLimiter: RateLimiterService,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
     @Inject(REDIS_APP_SUB_CLIENT) private readonly appSub: Redis,
   ) {}
@@ -126,6 +133,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
       return;
     }
 
+    const allowed = await this.rateLimiter.isAllowed(
+      `join_queue:${socket.data.user.id}`,
+      JOIN_QUEUE_LIMIT,
+      JOIN_QUEUE_WINDOW_SECONDS,
+    );
+    if (!allowed) {
+      socket.emit(ChatServerEvent.ERROR, { code: "rate_limited", message: "Slow down a little" });
+      return;
+    }
+
     const user = await this.usersService.updateMode(socket.data.user.id, parsed.data.mode);
     socket.data.user = user;
     await this.attemptMatchOrQueue(user, socket);
@@ -164,6 +181,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     const activeSessionId = await this.sessionsService.getSessionIdForUser(user.id);
     if (activeSessionId !== parsed.data.sessionId) {
       socket.emit(ChatServerEvent.ERROR, { code: "not_in_session", message: "Not part of this session" });
+      return;
+    }
+
+    const allowed = await this.rateLimiter.isAllowed(
+      `send_message:${user.id}`,
+      SEND_MESSAGE_LIMIT,
+      SEND_MESSAGE_WINDOW_SECONDS,
+    );
+    if (!allowed) {
+      socket.emit(ChatServerEvent.ERROR, { code: "rate_limited", message: "You're sending messages too fast" });
       return;
     }
 
