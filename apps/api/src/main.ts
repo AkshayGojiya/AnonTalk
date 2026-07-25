@@ -4,11 +4,13 @@ import { ConfigService } from "@nestjs/config";
 import cookieParser from "cookie-parser";
 import { Logger } from "nestjs-pino";
 import { AppModule } from "./app.module";
+import { RedisIoAdapter } from "./redis/redis-io.adapter";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   app.useLogger(app.get(Logger));
   app.use(cookieParser());
+  app.useWebSocketAdapter(new RedisIoAdapter(app));
 
   const config = app.get(ConfigService);
   app.enableCors({
