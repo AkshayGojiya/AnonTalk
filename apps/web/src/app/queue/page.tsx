@@ -8,12 +8,14 @@ import type { MatchFoundPayload } from "@anontalk/shared";
 import { useSocketContext } from "@/components/socket-provider";
 import { useAuthStore } from "@/store/auth-store";
 import { useChatStore } from "@/store/chat-store";
+import { useRequireAuth } from "@/hooks/use-require-auth";
 import { DecorativeBlob } from "@/components/decorative-blob";
 
 const WAVEFORM_BARS = [10, 22, 14, 30, 18, 26, 12, 20, 16, 28, 10, 22];
 
 export default function QueuePage() {
   const router = useRouter();
+  const { ready } = useRequireAuth();
   const socket = useSocketContext();
   const mode = useAuthStore((s) => s.user?.defaultMode ?? "ANONYMOUS");
   const setMatch = useChatStore((s) => s.setMatch);
@@ -32,6 +34,13 @@ export default function QueuePage() {
       socket.off("match_found", handleMatchFound);
     };
   }, [socket, mode, router, setMatch]);
+
+  function handleCancel() {
+    socket?.emit("leave_queue");
+    router.push("/");
+  }
+
+  if (!ready) return null;
 
   return (
     <div className="relative flex flex-1 flex-col items-center justify-center gap-10 overflow-hidden px-6 text-center">
@@ -75,7 +84,7 @@ export default function QueuePage() {
       </div>
 
       <button
-        onClick={() => router.push("/identity")}
+        onClick={handleCancel}
         className="relative z-10 text-sm font-semibold text-muted-foreground underline underline-offset-4 hover:text-foreground"
       >
         Cancel

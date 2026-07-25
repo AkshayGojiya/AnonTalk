@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Flag, Send } from "lucide-react";
 import type {
+  ErrorPayload,
   MatchFoundPayload,
   ReceiveMessagePayload,
   SessionEndedPayload,
@@ -13,6 +14,7 @@ import type {
 import { useSocketContext } from "@/components/socket-provider";
 import { useAuthStore } from "@/store/auth-store";
 import { useChatStore } from "@/store/chat-store";
+import { useRequireAuth } from "@/hooks/use-require-auth";
 import { PeerBadge } from "@/components/chat/peer-badge";
 import { ReportDialog } from "@/components/chat/report-dialog";
 import { cn } from "@/lib/utils";
@@ -28,6 +30,7 @@ export default function ChatPageRoute() {
 
 function ChatPage({ sessionId }: { sessionId: string }) {
   const router = useRouter();
+  const { ready } = useRequireAuth();
   const socket = useSocketContext();
   const selfId = useAuthStore((s) => s.user?.id);
 
@@ -49,7 +52,12 @@ function ChatPage({ sessionId }: { sessionId: string }) {
     if (!socket) return;
 
     function handleMatchFound(payload: MatchFoundPayload) {
-      if (payload.sessionId !== sessionId) return;
+      if (payload.sessionId !== sessionId) {
+        // The server says our real active session is a different one -- this
+        // URL doesn't belong to us (stale link, or typed/guessed directly).
+        router.replace(`/chat/${payload.sessionId}`);
+        return;
+      }
       setMatch(payload.sessionId, payload.peer, payload.startedAt);
       setEndedReason(null);
     }
@@ -69,12 +77,21 @@ function ChatPage({ sessionId }: { sessionId: string }) {
       if (payload.sessionId !== sessionId) return;
       setEndedReason(null);
     }
+    function handleError(payload: ErrorPayload) {
+      if (payload.code === "no_active_session") router.replace("/queue");
+    }
 
     socket.on("match_found", handleMatchFound);
     socket.on("receive_message", handleReceiveMessage);
     socket.on("typing", handleTyping);
     socket.on("session_ended", handleSessionEnded);
     socket.on("peer_reconnected", handlePeerReconnected);
+    socket.on("error", handleError);
+
+    // A page landed on directly (bookmark, typed URL, reload) won't have a
+    // locally-known peer yet -- confirm this sessionId is actually ours rather
+    // than trusting the URL param alone.
+    if (!peer) socket.emit("check_session");
 
     return () => {
       socket.off("match_found", handleMatchFound);
@@ -82,8 +99,9 @@ function ChatPage({ sessionId }: { sessionId: string }) {
       socket.off("typing", handleTyping);
       socket.off("session_ended", handleSessionEnded);
       socket.off("peer_reconnected", handlePeerReconnected);
+      socket.off("error", handleError);
     };
-  }, [socket, sessionId, setMatch]);
+  }, [socket, sessionId, setMatch, router, peer]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -128,6 +146,8 @@ function ChatPage({ sessionId }: { sessionId: string }) {
   }
 
   const isEnded = endedReason !== null;
+
+  if (!ready) return null;
 
   return (
     <div className="flex flex-1 flex-col bg-background">

@@ -3,12 +3,15 @@
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@/store/auth-store";
+import { useRequireAuth } from "@/hooks/use-require-auth";
 import { ProfileForm } from "@/components/profile-form";
 
 export default function IdentityPage() {
   const router = useRouter();
-  const user = useAuthStore((s) => s.user);
+  const { user, ready } = useRequireAuth();
   const setUser = useAuthStore((s) => s.setUser);
+
+  if (!ready) return null;
 
   return (
     <div className="flex flex-1 flex-col items-center gap-8 overflow-y-auto px-6 py-12 text-center">

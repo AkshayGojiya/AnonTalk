@@ -97,17 +97,27 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 
     await this.sessionsService.cancelDisconnectGrace(user.id, sessionId);
 
+    const emitted = await this.emitCurrentSession(user.id, socket, sessionId);
+    if (!emitted) return;
+
+    this.server.to(room(sessionId)).emit(ChatServerEvent.PEER_RECONNECTED, { sessionId });
+  }
+
+  /** Looks up `sessionId`'s hash and, if it still exists, joins the socket to its
+   * room and re-sends `match_found` -- shared by the connect-time resume path and
+   * the on-demand `check_session` handler below. */
+  private async emitCurrentSession(userId: string, socket: AuthenticatedSocket, sessionId: string): Promise<boolean> {
     const session = await this.sessionsService.getSession(sessionId);
-    if (!session) return;
+    if (!session) return false;
 
     socket.join(room(sessionId));
-    const isUserA = session.userA === user.id;
+    const isUserA = session.userA === userId;
     socket.emit(ChatServerEvent.MATCH_FOUND, {
       sessionId,
       peer: isUserA ? session.peerIdentityA : session.peerIdentityB,
       startedAt: session.startedAt,
     });
-    this.server.to(room(sessionId)).emit(ChatServerEvent.PEER_RECONNECTED, { sessionId });
+    return true;
   }
 
   async handleDisconnect(socket: AuthenticatedSocket) {
@@ -146,6 +156,28 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     const user = await this.usersService.updateMode(socket.data.user.id, parsed.data.mode);
     socket.data.user = user;
     await this.attemptMatchOrQueue(user, socket);
+  }
+
+  @SubscribeMessage(ChatClientEvent.LEAVE_QUEUE)
+  async handleLeaveQueue(@ConnectedSocket() socket: AuthenticatedSocket) {
+    await this.matchmakingService.leaveQueue(socket.data.user.id);
+  }
+
+  // Lets a freshly-mounted chat page (e.g. a direct/bookmarked URL, or a page
+  // reload) confirm the sessionId in its URL is actually this user's live
+  // session, rather than trusting the URL param alone -- responds with either
+  // match_found for the user's real active session (which may not be the same
+  // sessionId the client asked about) or an error if they have none at all.
+  @SubscribeMessage(ChatClientEvent.CHECK_SESSION)
+  async handleCheckSession(@ConnectedSocket() socket: AuthenticatedSocket) {
+    const user = socket.data.user;
+    const sessionId = await this.sessionsService.getSessionIdForUser(user.id);
+    if (!sessionId) {
+      socket.emit(ChatServerEvent.ERROR, { code: "no_active_session", message: "This chat no longer exists" });
+      return;
+    }
+
+    await this.emitCurrentSession(user.id, socket, sessionId);
   }
 
   @SubscribeMessage(ChatClientEvent.SKIP)

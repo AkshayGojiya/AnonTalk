@@ -1,24 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
+import { useRequireAuth } from "@/hooks/use-require-auth";
 import { ProfileForm } from "@/components/profile-form";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const user = useAuthStore((s) => s.user);
+  const { user, ready } = useRequireAuth();
   const setUser = useAuthStore((s) => s.setUser);
-  const hasHydrated = useAuthStore((s) => s.hasHydrated);
   const [showSaved, setShowSaved] = useState(false);
 
-  useEffect(() => {
-    if (hasHydrated && !user) router.replace("/login");
-  }, [hasHydrated, user, router]);
-
-  if (!hasHydrated || !user) return null;
+  if (!ready) return null;
 
   return (
     <div className="flex flex-1 flex-col items-center gap-8 overflow-y-auto px-6 py-10 text-center">

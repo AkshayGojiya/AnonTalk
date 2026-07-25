@@ -4,6 +4,8 @@ import { peerIdentitySchema } from "../identity";
 
 export const ChatClientEvent = {
   JOIN_QUEUE: "join_queue",
+  LEAVE_QUEUE: "leave_queue",
+  CHECK_SESSION: "check_session",
   SKIP: "skip",
   SEND_MESSAGE: "send_message",
   TYPING_START: "typing_start",
@@ -106,6 +108,8 @@ export type ErrorPayload = z.infer<typeof errorPayloadSchema>;
 
 export interface ClientToServerEvents {
   [ChatClientEvent.JOIN_QUEUE]: (payload: JoinQueuePayload) => void;
+  [ChatClientEvent.LEAVE_QUEUE]: () => void;
+  [ChatClientEvent.CHECK_SESSION]: () => void;
   [ChatClientEvent.SKIP]: (payload: SkipPayload) => void;
   [ChatClientEvent.SEND_MESSAGE]: (payload: SendMessagePayload) => void;
   [ChatClientEvent.TYPING_START]: (payload: TypingPayload) => void;

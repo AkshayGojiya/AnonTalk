@@ -7,6 +7,7 @@ import type { Request, Response } from "express";
 import { ZodValidationPipe } from "../common/pipes/zod-validation.pipe";
 import { toCurrentUserDto } from "../users/user.mapper";
 import { AuthService } from "./auth.service";
+import { GoogleAuthGuard } from "./guards/google-auth.guard";
 import type { GoogleProfilePayload } from "./types";
 
 // Stricter than the app-wide default — these endpoints gate login/session issuance,
@@ -20,7 +21,7 @@ export class AuthController {
   ) {}
 
   @Get("google")
-  @UseGuards(AuthGuard("google"))
+  @UseGuards(GoogleAuthGuard)
   googleAuth() {
     // Passport redirects to Google's consent screen; body never runs.
   }
