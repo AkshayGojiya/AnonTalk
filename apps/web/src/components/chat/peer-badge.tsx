@@ -35,7 +35,7 @@ export function PeerBadge({ peer, className }: { peer: PeerIdentity; className?:
       <div>
         <p className="font-medium leading-tight">{peer.identity.displayName}</p>
         <p className="text-xs text-muted-foreground">
-          {[peer.identity.department, peer.identity.collegeName].filter(Boolean).join(" · ")}
+          {peer.identity.department} · {peer.identity.year}
         </p>
       </div>
     </div>

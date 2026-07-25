@@ -9,8 +9,8 @@ export type AnonIdentity = z.infer<typeof anonIdentitySchema>;
 
 export const realIdentitySchema = z.object({
   displayName: z.string(),
-  department: z.string().optional(),
-  collegeName: z.string(),
+  department: z.string(),
+  year: z.string(),
 });
 export type RealIdentity = z.infer<typeof realIdentitySchema>;
 

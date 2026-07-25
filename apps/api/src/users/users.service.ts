@@ -1,5 +1,11 @@
 import { Injectable } from "@nestjs/common";
-import { UserMode, type PeerIdentity } from "@anontalk/shared";
+import {
+  DEPARTMENT_LABELS,
+  UserMode,
+  YEAR_LABELS,
+  type CompleteOnboardingDto,
+  type PeerIdentity,
+} from "@anontalk/shared";
 import type { User } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { generateAnonIdentity } from "./anon-identity.generator";
@@ -15,19 +21,25 @@ export class UsersService {
     });
   }
 
+  async completeOnboarding(userId: string, dto: CompleteOnboardingDto) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { department: dto.department, year: dto.year, defaultMode: dto.mode },
+    });
+  }
+
   async findById(userId: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { id: userId } });
   }
 
   async buildPublicIdentity(user: User): Promise<PeerIdentity> {
     if (user.defaultMode === UserMode.REAL) {
-      const allowedDomain = await this.prisma.allowedDomain.findFirst({ where: { domain: user.domain } });
       return {
         mode: "REAL",
         identity: {
           displayName: user.displayName,
-          department: user.department ?? undefined,
-          collegeName: allowedDomain?.collegeName ?? user.domain,
+          department: user.department ? DEPARTMENT_LABELS[user.department] : "Unknown department",
+          year: user.year ? YEAR_LABELS[user.year] : "Unknown year",
         },
       };
     }

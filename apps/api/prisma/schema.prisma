@@ -13,7 +13,8 @@ model User {
   email           String     @unique
   domain          String
   displayName     String
-  department      String?
+  department      Department?
+  year            Year?
   defaultMode     UserMode   @default(ANONYMOUS)
   role            UserRole   @default(USER)
   status          UserStatus @default(ACTIVE)
@@ -97,6 +98,26 @@ model BlockedUser {
 enum UserMode {
   ANONYMOUS
   REAL
+}
+
+enum Department {
+  CIVIL
+  STRUCTURE
+  COMPUTER
+  ELECTRONICS
+  ELECTRICAL
+  MECHANICAL
+  PRODUCTION
+  ELECTRONICS_AND_COMMUNICATION
+  INFORMATION_TECHNOLOGY
+  MATHEMATICS
+}
+
+enum Year {
+  YEAR_1
+  YEAR_2
+  YEAR_3
+  YEAR_4
 }
 
 enum UserRole {

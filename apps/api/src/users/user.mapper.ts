@@ -7,6 +7,7 @@ export function toCurrentUserDto(user: User): CurrentUserDto {
     email: user.email,
     displayName: user.displayName,
     department: user.department,
+    year: user.year,
     defaultMode: user.defaultMode,
     role: user.role,
     status: user.status,

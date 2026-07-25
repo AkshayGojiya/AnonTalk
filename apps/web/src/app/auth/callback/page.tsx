@@ -45,7 +45,7 @@ function AuthCallback() {
           return;
         }
         setSession(data.accessToken, data.user);
-        router.replace("/identity");
+        router.replace(data.user.department ? "/queue" : "/identity");
       })
       .catch(() => setAsyncError("Couldn't reach the server. Please try again."));
   }, [code, router, setSession]);

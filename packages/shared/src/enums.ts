@@ -4,6 +4,48 @@ export const UserMode = {
 } as const;
 export type UserMode = (typeof UserMode)[keyof typeof UserMode];
 
+export const Department = {
+  CIVIL: "CIVIL",
+  STRUCTURE: "STRUCTURE",
+  COMPUTER: "COMPUTER",
+  ELECTRONICS: "ELECTRONICS",
+  ELECTRICAL: "ELECTRICAL",
+  MECHANICAL: "MECHANICAL",
+  PRODUCTION: "PRODUCTION",
+  ELECTRONICS_AND_COMMUNICATION: "ELECTRONICS_AND_COMMUNICATION",
+  INFORMATION_TECHNOLOGY: "INFORMATION_TECHNOLOGY",
+  MATHEMATICS: "MATHEMATICS",
+} as const;
+export type Department = (typeof Department)[keyof typeof Department];
+
+export const DEPARTMENT_LABELS: Record<Department, string> = {
+  CIVIL: "Civil",
+  STRUCTURE: "Structure",
+  COMPUTER: "Computer",
+  ELECTRONICS: "Electronics",
+  ELECTRICAL: "Electrical",
+  MECHANICAL: "Mechanical",
+  PRODUCTION: "Production",
+  ELECTRONICS_AND_COMMUNICATION: "Electronics & Communication",
+  INFORMATION_TECHNOLOGY: "Information Technology",
+  MATHEMATICS: "Mathematics",
+};
+
+export const Year = {
+  YEAR_1: "YEAR_1",
+  YEAR_2: "YEAR_2",
+  YEAR_3: "YEAR_3",
+  YEAR_4: "YEAR_4",
+} as const;
+export type Year = (typeof Year)[keyof typeof Year];
+
+export const YEAR_LABELS: Record<Year, string> = {
+  YEAR_1: "1st Year",
+  YEAR_2: "2nd Year",
+  YEAR_3: "3rd Year",
+  YEAR_4: "4th Year",
+};
+
 export const UserRole = {
   USER: "USER",
   MODERATOR: "MODERATOR",

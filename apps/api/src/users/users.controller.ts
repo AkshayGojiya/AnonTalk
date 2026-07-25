@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Patch, Req, UseGuards } from "@nestjs/common";
-import { updateUserModeSchema } from "@anontalk/shared";
-import type { UpdateUserModeDto } from "@anontalk/shared";
+import { Body, Controller, Get, Patch, Post, Req, UseGuards } from "@nestjs/common";
+import { completeOnboardingSchema, updateUserModeSchema } from "@anontalk/shared";
+import type { CompleteOnboardingDto, UpdateUserModeDto } from "@anontalk/shared";
 import type { User } from "@prisma/client";
 import type { Request } from "express";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -24,6 +24,15 @@ export class UsersController {
     @Body(new ZodValidationPipe(updateUserModeSchema)) body: UpdateUserModeDto,
   ) {
     const updated = await this.usersService.updateMode(req.user.id, body.mode);
+    return toCurrentUserDto(updated);
+  }
+
+  @Post("me/onboarding")
+  async completeOnboarding(
+    @Req() req: Request & { user: User },
+    @Body(new ZodValidationPipe(completeOnboardingSchema)) body: CompleteOnboardingDto,
+  ) {
+    const updated = await this.usersService.completeOnboarding(req.user.id, body);
     return toCurrentUserDto(updated);
   }
 }
