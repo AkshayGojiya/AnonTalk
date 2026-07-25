@@ -32,11 +32,11 @@ export class AuthService {
     }
 
     const domain = profile.email.split("@")[1]?.toLowerCase();
+    if (!domain) {
+      return { ok: false, reason: "domain_not_allowed" };
+    }
 
-    const allowedDomain = domain
-      ? await this.prisma.allowedDomain.findFirst({ where: { domain, isActive: true } })
-      : null;
-
+    const allowedDomain = await this.prisma.allowedDomain.findFirst({ where: { domain, isActive: true } });
     if (!allowedDomain) {
       return { ok: false, reason: "domain_not_allowed" };
     }
