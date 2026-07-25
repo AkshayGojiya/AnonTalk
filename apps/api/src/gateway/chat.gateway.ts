@@ -12,6 +12,8 @@ import {
 import {
   ChatClientEvent,
   ChatServerEvent,
+  SessionEndReason,
+  UserStatus,
   joinQueuePayloadSchema,
   skipPayloadSchema,
   sendMessagePayloadSchema,
@@ -21,13 +23,12 @@ import type { User } from "@prisma/client";
 import type { Redis } from "ioredis";
 import type { Server } from "socket.io";
 import { REDIS_APP_SUB_CLIENT, REDIS_CLIENT } from "../redis/redis.constants";
+import { FORCE_LOGOUT_CHANNEL, MATCH_CHANNEL, SESSION_ENDED_CHANNEL } from "../redis/pubsub.constants";
 import { MatchmakingService } from "../matchmaking/matchmaking.service";
-import { SessionsService, type SessionRecord } from "../sessions/sessions.service";
+import { SessionsService } from "../sessions/sessions.service";
 import { UsersService } from "../users/users.service";
-import type { AuthenticatedSocket, MatchMessage, SessionEndedMessage } from "./types";
+import type { AuthenticatedSocket, ForceLogoutMessage, MatchMessage, SessionEndedMessage } from "./types";
 
-const MATCH_CHANNEL = "ps:match";
-const SESSION_ENDED_CHANNEL = "ps:session-ended";
 const GRACE_SWEEP_INTERVAL_MS = 3_000;
 const MAX_MATCH_RETRY_DEPTH = 3;
 
@@ -53,7 +54,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
   ) {}
 
   async onModuleInit() {
-    await this.appSub.subscribe(MATCH_CHANNEL, SESSION_ENDED_CHANNEL);
+    await this.appSub.subscribe(MATCH_CHANNEL, SESSION_ENDED_CHANNEL, FORCE_LOGOUT_CHANNEL);
     this.appSub.on("message", (channel: string, message: string) => {
       if (channel === MATCH_CHANNEL) {
         this.onMatchMessage(JSON.parse(message) as MatchMessage).catch((err) =>
@@ -61,6 +62,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
         );
       } else if (channel === SESSION_ENDED_CHANNEL) {
         this.onSessionEndedMessage(JSON.parse(message) as SessionEndedMessage);
+      } else if (channel === FORCE_LOGOUT_CHANNEL) {
+        this.onForceLogoutMessage(JSON.parse(message) as ForceLogoutMessage);
       }
     });
 
@@ -144,10 +147,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     }
 
     socket.leave(room(parsed.data.sessionId));
-    const ended = await this.sessionsService.endSession(parsed.data.sessionId);
-    if (ended) {
-      await this.publishSessionEnded(ended, "skip");
-    }
+    await this.sessionsService.endSessionAndNotify(parsed.data.sessionId, SessionEndReason.SKIP);
 
     await this.attemptMatchOrQueue(user, socket);
   }
@@ -164,6 +164,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     const activeSessionId = await this.sessionsService.getSessionIdForUser(user.id);
     if (activeSessionId !== parsed.data.sessionId) {
       socket.emit(ChatServerEvent.ERROR, { code: "not_in_session", message: "Not part of this session" });
+      return;
+    }
+
+    // Re-check live status: a mute/ban applied mid-session must take effect on the
+    // very next message, not just at the socket's original connection time.
+    const freshUser = await this.usersService.findById(user.id);
+    if (!freshUser || freshUser.status !== UserStatus.ACTIVE) {
+      socket.emit(ChatServerEvent.ERROR, { code: "muted", message: "You can't send messages right now" });
       return;
     }
 
@@ -235,16 +243,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     await this.redis.publish(MATCH_CHANNEL, JSON.stringify(message));
   }
 
-  private async publishSessionEnded(session: SessionRecord, reason: string) {
-    const message: SessionEndedMessage = {
-      sessionId: session.sessionId,
-      userA: session.userA,
-      userB: session.userB,
-      reason,
-    };
-    await this.redis.publish(SESSION_ENDED_CHANNEL, JSON.stringify(message));
-  }
-
   private async onMatchMessage(msg: MatchMessage) {
     const session = await this.sessionsService.getSession(msg.sessionId);
     if (!session) return;
@@ -280,13 +278,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     }
   }
 
+  private onForceLogoutMessage(msg: ForceLogoutMessage) {
+    const sockets = this.userSockets.get(msg.userId);
+    if (!sockets) return;
+
+    for (const sock of sockets) {
+      sock.emit(ChatServerEvent.FORCE_LOGOUT, { reason: msg.reason });
+      sock.disconnect(true);
+    }
+  }
+
   private async sweepDisconnectedSessions() {
     const expired = await this.sessionsService.sweepExpiredGrace();
     for (const [, sessionId] of expired) {
-      const ended = await this.sessionsService.endSession(sessionId);
-      if (ended) {
-        await this.publishSessionEnded(ended, "peer_disconnected");
-      }
+      await this.sessionsService.endSessionAndNotify(sessionId, SessionEndReason.PEER_DISCONNECTED);
     }
   }
 

@@ -17,3 +17,8 @@ export interface SessionEndedMessage {
   userB: string;
   reason: string;
 }
+
+export interface ForceLogoutMessage {
+  userId: string;
+  reason: string;
+}

@@ -1,6 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import type { Redis } from "ioredis";
 import { REDIS_CLIENT } from "../redis/redis.constants";
+import { blocklistKey } from "../redis/pubsub.constants";
 
 const QUEUE_KEY = "queue:waiting";
 const QUEUE_MEMBER_TTL_SECONDS = 30;
@@ -8,10 +9,6 @@ const MAX_CANDIDATE_ATTEMPTS = 5;
 
 function memberKey(userId: string) {
   return `queue:member:${userId}`;
-}
-
-function blocklistKey(userId: string) {
-  return `blocklist:${userId}`;
 }
 
 // Atomically: skip past self/blocked candidates (re-queueing them), pop a valid match if one

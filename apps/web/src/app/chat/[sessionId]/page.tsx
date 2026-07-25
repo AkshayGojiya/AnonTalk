@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowRight, Send } from "lucide-react";
+import { ArrowRight, Flag, Send } from "lucide-react";
 import type {
   MatchFoundPayload,
   ReceiveMessagePayload,
@@ -13,6 +13,7 @@ import { useSocketContext } from "@/components/socket-provider";
 import { useAuthStore } from "@/store/auth-store";
 import { useChatStore } from "@/store/chat-store";
 import { PeerBadge } from "@/components/chat/peer-badge";
+import { ReportDialog } from "@/components/chat/report-dialog";
 import { cn } from "@/lib/utils";
 
 const TYPING_STOP_DELAY_MS = 2000;
@@ -37,6 +38,7 @@ function ChatPage({ sessionId }: { sessionId: string }) {
   const [peerTyping, setPeerTyping] = useState(false);
   const [endedReason, setEndedReason] = useState<string | null>(null);
   const [input, setInput] = useState("");
+  const [reportOpen, setReportOpen] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -128,17 +130,7 @@ function ChatPage({ sessionId }: { sessionId: string }) {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="flex items-center justify-between border-b border-border px-4 py-3">
-        {peer ? <PeerBadge peer={peer} /> : <div className="h-10" />}
-        <button
-          onClick={handleSkip}
-          disabled={isEnded}
-          className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium transition-colors hover:bg-secondary disabled:opacity-50"
-        >
-          Next
-          <ArrowRight className="h-4 w-4" />
-        </button>
-      </header>
+      <header className="border-b border-border px-4 py-3">{peer ? <PeerBadge peer={peer} /> : <div className="h-10" />}</header>
 
       <div className="flex flex-1 flex-col gap-2 overflow-y-auto px-4 py-4">
         {messages.length === 0 && !isEnded && (
@@ -189,28 +181,48 @@ function ChatPage({ sessionId }: { sessionId: string }) {
           </button>
         </div>
       ) : (
-        <div className="flex items-center gap-2 border-t border-border p-3">
-          <input
-            value={input}
-            onChange={(e) => handleInputChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder="Type a message…"
-            className="h-11 flex-1 rounded-lg border border-border bg-background px-4 text-sm outline-none focus:border-primary"
-          />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim()}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground disabled:opacity-50"
-          >
-            <Send className="h-4 w-4" />
-          </button>
-        </div>
+        <>
+          <div className="flex items-center gap-2 border-t border-border p-3">
+            <input
+              value={input}
+              onChange={(e) => handleInputChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder="Type a message…"
+              className="h-11 flex-1 rounded-lg border border-border bg-background px-4 text-sm outline-none focus:border-primary"
+            />
+            <button
+              onClick={handleSend}
+              disabled={!input.trim()}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground disabled:opacity-50"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="flex items-center justify-between gap-3 px-4 pb-3">
+            <button
+              onClick={() => setReportOpen(true)}
+              className="flex items-center gap-1.5 text-sm font-medium text-destructive hover:opacity-80"
+            >
+              <Flag className="h-4 w-4" />
+              Report
+            </button>
+            <button
+              onClick={handleSkip}
+              className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium transition-colors hover:bg-secondary"
+            >
+              Next
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        </>
       )}
+
+      <ReportDialog open={reportOpen} onOpenChange={setReportOpen} sessionId={sessionId} />
     </div>
   );
 }

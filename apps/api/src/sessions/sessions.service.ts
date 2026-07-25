@@ -1,8 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { Inject, Injectable } from "@nestjs/common";
-import type { PeerIdentity } from "@anontalk/shared";
+import type { PeerIdentity, SessionEndReason } from "@anontalk/shared";
 import type { Redis } from "ioredis";
 import { REDIS_CLIENT } from "../redis/redis.constants";
+import { SESSION_ENDED_CHANNEL } from "../redis/pubsub.constants";
+import type { SessionEndedMessage } from "../gateway/types";
 
 const SESSION_TTL_SECONDS = 60 * 60;
 const BUFFER_TTL_SECONDS = 60 * 60 * 6;
@@ -109,6 +111,21 @@ export class SessionsService {
     const flat = (await this.redis.eval(TEARDOWN_SCRIPT, 1, sessionKey(sessionId))) as string[];
     if (!flat || flat.length === 0) return null;
     return this.parseSessionRecord(sessionId, flatArrayToRecord(flat));
+  }
+
+  /** Tears down the session (if still active) and notifies both instances' owning sockets. */
+  async endSessionAndNotify(sessionId: string, reason: SessionEndReason): Promise<SessionRecord | null> {
+    const ended = await this.endSession(sessionId);
+    if (ended) {
+      const message: SessionEndedMessage = {
+        sessionId: ended.sessionId,
+        userA: ended.userA,
+        userB: ended.userB,
+        reason,
+      };
+      await this.redis.publish(SESSION_ENDED_CHANNEL, JSON.stringify(message));
+    }
+    return ended;
   }
 
   private parseSessionRecord(sessionId: string, record: Record<string, string>): SessionRecord {

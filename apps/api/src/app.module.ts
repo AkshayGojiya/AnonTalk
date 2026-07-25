@@ -8,6 +8,9 @@ import { HealthModule } from "./health/health.module";
 import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
 import { GatewayModule } from "./gateway/gateway.module";
+import { ReportsModule } from "./reports/reports.module";
+import { BlockingModule } from "./blocking/blocking.module";
+import { ModerationModule } from "./moderation/moderation.module";
 
 @Module({
   imports: [
@@ -30,6 +33,9 @@ import { GatewayModule } from "./gateway/gateway.module";
     AuthModule,
     UsersModule,
     GatewayModule,
+    ReportsModule,
+    BlockingModule,
+    ModerationModule,
   ],
 })
 export class AppModule {}
