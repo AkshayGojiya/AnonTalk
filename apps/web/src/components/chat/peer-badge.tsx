@@ -1,19 +1,16 @@
+import { Ghost } from "lucide-react";
 import type { PeerIdentity } from "@anontalk/shared";
 import { cn } from "@/lib/utils";
 
 export function PeerBadge({ peer, className }: { peer: PeerIdentity; className?: string }) {
   if (peer.mode === "ANONYMOUS") {
-    const [from, to] = peer.identity.gradient;
     return (
       <div className={cn("flex items-center gap-3", className)}>
-        <div
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg shadow-sm"
-          style={{ backgroundImage: `linear-gradient(135deg, ${from}, ${to})` }}
-        >
-          {peer.identity.emoji}
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-sage text-sage-foreground shadow-sm">
+          <Ghost className="h-5 w-5" strokeWidth={1.75} />
         </div>
         <div>
-          <p className="font-heading text-sm font-bold leading-tight">{peer.identity.nickname}</p>
+          <p className="font-heading text-sm font-bold leading-tight">{peer.identity.displayName}</p>
           <p className="text-xs text-muted-foreground">Anonymous</p>
         </div>
       </div>

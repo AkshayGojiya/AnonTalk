@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowRight, MessagesSquare } from "lucide-react";
+import { ArrowRight, MessagesSquare, UserCog } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 import { DecorativeBlob } from "@/components/decorative-blob";
 
@@ -22,6 +22,16 @@ export default function Home() {
 
   return (
     <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden px-6 text-center">
+      {user && (
+        <button
+          onClick={() => router.push("/profile")}
+          aria-label="Your profile"
+          className="absolute top-5 right-5 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-card shadow-sm"
+        >
+          <UserCog className="h-4 w-4 text-foreground" strokeWidth={1.75} />
+        </button>
+      )}
+
       <DecorativeBlob
         color="var(--coral-light)"
         variant={0}

@@ -6,7 +6,6 @@
     "target": "ES2022",
     "rootDir": "./src",
     "outDir": "./dist",
-    "incremental": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "isolatedModules": false,

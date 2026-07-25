@@ -1,14 +1,7 @@
 import { Injectable } from "@nestjs/common";
-import {
-  DEPARTMENT_LABELS,
-  UserMode,
-  YEAR_LABELS,
-  type CompleteOnboardingDto,
-  type PeerIdentity,
-} from "@anontalk/shared";
+import { DEPARTMENT_LABELS, UserMode, YEAR_LABELS, type PeerIdentity, type UpdateProfileDto } from "@anontalk/shared";
 import type { User } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
-import { generateAnonIdentity } from "./anon-identity.generator";
 
 @Injectable()
 export class UsersService {
@@ -21,10 +14,15 @@ export class UsersService {
     });
   }
 
-  async completeOnboarding(userId: string, dto: CompleteOnboardingDto) {
+  async updateProfile(userId: string, dto: UpdateProfileDto) {
     return this.prisma.user.update({
       where: { id: userId },
-      data: { department: dto.department, year: dto.year, defaultMode: dto.mode },
+      data: {
+        displayName: dto.displayName,
+        department: dto.department,
+        year: dto.year,
+        defaultMode: dto.mode,
+      },
     });
   }
 
@@ -44,6 +42,6 @@ export class UsersService {
       };
     }
 
-    return { mode: "ANONYMOUS", identity: generateAnonIdentity() };
+    return { mode: "ANONYMOUS", identity: { displayName: user.displayName } };
   }
 }

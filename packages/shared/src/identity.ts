@@ -1,9 +1,7 @@
 import { z } from "zod";
 
 export const anonIdentitySchema = z.object({
-  nickname: z.string(),
-  emoji: z.string(),
-  gradient: z.tuple([z.string(), z.string()]),
+  displayName: z.string(),
 });
 export type AnonIdentity = z.infer<typeof anonIdentitySchema>;
 
