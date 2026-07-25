@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String     @id @default(cuid())
+  googleId        String     @unique
+  email           String     @unique
+  domain          String
+  displayName     String
+  department      String?
+  defaultMode     UserMode   @default(ANONYMOUS)
+  role            UserRole   @default(USER)
+  status          UserStatus @default(ACTIVE)
+  reputationScore Int        @default(100)
+  tokenVersion    Int        @default(0)
+  mutedUntil      DateTime?
+  bannedAt        DateTime?
+  banReason       String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  lastLoginAt     DateTime?
+
+  reportsFiled      Report[]           @relation("Reporter")
+  reportsReceived   Report[]           @relation("Reported")
+  reportsReviewed   Report[]           @relation("Moderator")
+  moderationsTaken  ModerationAction[] @relation("ModerationTarget")
+  moderationsIssued ModerationAction[] @relation("ModerationIssuedBy")
+  blocksMade        BlockedUser[]      @relation("Blocker")
+  blocksReceived    BlockedUser[]      @relation("Blocked")
+
+  @@index([domain])
+  @@index([status])
+}
+
+model AllowedDomain {
+  id          String   @id @default(cuid())
+  domain      String   @unique
+  collegeName String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model Report {
+  id             String       @id @default(cuid())
+  sessionId      String
+  reporterId     String
+  reporter       User         @relation("Reporter", fields: [reporterId], references: [id])
+  reportedUserId String
+  reportedUser   User         @relation("Reported", fields: [reportedUserId], references: [id])
+  reason         ReportReason
+  details        String?
+  messageBuffer  Json
+  status         ReportStatus @default(PENDING)
+  createdAt      DateTime     @default(now())
+  reviewedAt     DateTime?
+  reviewedById   String?
+  reviewedBy     User?        @relation("Moderator", fields: [reviewedById], references: [id])
+
+  @@index([reportedUserId, status])
+  @@index([createdAt])
+  @@index([reporterId])
+}
+
+model ModerationAction {
+  id           String               @id @default(cuid())
+  targetUserId String
+  target       User                 @relation("ModerationTarget", fields: [targetUserId], references: [id])
+  moderatorId  String?
+  moderator    User?                @relation("ModerationIssuedBy", fields: [moderatorId], references: [id])
+  reportId     String?
+  actionType   ModerationActionType
+  reason       String?
+  expiresAt    DateTime?
+  createdAt    DateTime             @default(now())
+
+  @@index([targetUserId, createdAt])
+}
+
+model BlockedUser {
+  id        String   @id @default(cuid())
+  blockerId String
+  blocker   User     @relation("Blocker", fields: [blockerId], references: [id])
+  blockedId String
+  blocked   User     @relation("Blocked", fields: [blockedId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+}
+
+enum UserMode {
+  ANONYMOUS
+  REAL
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  MUTED
+  BANNED
+}
+
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  HATE_SPEECH
+  THREATS
+  NSFW
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  ACTIONED
+  DISMISSED
+}
+
+enum ModerationActionType {
+  WARN
+  MUTE
+  BAN
+  UNMUTE
+  UNBAN
+}
