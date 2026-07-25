@@ -52,7 +52,7 @@ export function ReportDialog({ open, onOpenChange, sessionId }: ReportDialogProp
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Report user</DialogTitle>
+          <DialogTitle className="font-heading text-lg">Report user</DialogTitle>
           <DialogDescription>Help us keep AnonTalk safe. This ends the current chat.</DialogDescription>
         </DialogHeader>
 
@@ -85,7 +85,7 @@ export function ReportDialog({ open, onOpenChange, sessionId }: ReportDialogProp
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="flex h-10 items-center justify-center gap-2 rounded-lg bg-destructive px-4 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+            className="flex h-11 items-center justify-center gap-2 rounded-full bg-destructive px-5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
           >
             {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
             Submit Report

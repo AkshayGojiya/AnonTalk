@@ -7,13 +7,13 @@ export function PeerBadge({ peer, className }: { peer: PeerIdentity; className?:
     return (
       <div className={cn("flex items-center gap-3", className)}>
         <div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg shadow-sm"
           style={{ backgroundImage: `linear-gradient(135deg, ${from}, ${to})` }}
         >
           {peer.identity.emoji}
         </div>
         <div>
-          <p className="font-medium leading-tight">{peer.identity.nickname}</p>
+          <p className="font-heading text-sm font-bold leading-tight">{peer.identity.nickname}</p>
           <p className="text-xs text-muted-foreground">Anonymous</p>
         </div>
       </div>
@@ -29,11 +29,11 @@ export function PeerBadge({ peer, className }: { peer: PeerIdentity; className?:
 
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-medium">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-coral text-sm font-bold text-coral-foreground shadow-sm">
         {initials}
       </div>
       <div>
-        <p className="font-medium leading-tight">{peer.identity.displayName}</p>
+        <p className="font-heading text-sm font-bold leading-tight">{peer.identity.displayName}</p>
         <p className="text-xs text-muted-foreground">
           {peer.identity.department} · {peer.identity.year}
         </p>

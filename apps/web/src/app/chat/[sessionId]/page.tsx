@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Flag, Send } from "lucide-react";
 import type {
   MatchFoundPayload,
@@ -129,39 +130,51 @@ function ChatPage({ sessionId }: { sessionId: string }) {
   const isEnded = endedReason !== null;
 
   return (
-    <div className="flex flex-1 flex-col">
-      <header className="border-b border-border px-4 py-3">{peer ? <PeerBadge peer={peer} /> : <div className="h-10" />}</header>
+    <div className="flex flex-1 flex-col bg-background">
+      <header className="flex items-center bg-card px-4 py-3 shadow-[0_2px_12px_-6px_rgba(43,36,32,0.12)]">
+        {peer ? <PeerBadge peer={peer} /> : <div className="h-11" />}
+      </header>
 
-      <div className="flex flex-1 flex-col gap-2 overflow-y-auto px-4 py-4">
+      <div className="flex flex-1 flex-col gap-2.5 overflow-y-auto px-4 py-5">
         {messages.length === 0 && !isEnded && (
           <div className="flex flex-1 flex-col items-center justify-center gap-1 text-center text-muted-foreground">
-            <p className="font-medium text-foreground">Start the conversation!</p>
+            <p className="font-heading font-bold text-foreground">Start the conversation!</p>
             <p className="text-sm">Say hi to break the ice.</p>
           </div>
         )}
 
-        {messages.map((message) => {
-          const isSelf = message.senderId === selfId;
-          return (
-            <div key={message.messageId} className={cn("flex", isSelf ? "justify-end" : "justify-start")}>
-              <div
-                className={cn(
-                  "max-w-[75%] rounded-2xl px-4 py-2 text-sm",
-                  isSelf ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground",
-                )}
+        <AnimatePresence initial={false}>
+          {messages.map((message) => {
+            const isSelf = message.senderId === selfId;
+            return (
+              <motion.div
+                key={message.messageId}
+                initial={{ opacity: 0, y: 10, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+                className={cn("flex", isSelf ? "justify-end" : "justify-start")}
               >
-                {message.content}
-              </div>
-            </div>
-          );
-        })}
+                <div
+                  className={cn(
+                    "max-w-[75%] rounded-3xl px-4 py-2.5 text-sm shadow-sm",
+                    isSelf
+                      ? "rounded-br-lg bg-primary text-primary-foreground"
+                      : "rounded-bl-lg bg-card text-card-foreground",
+                  )}
+                >
+                  {message.content}
+                </div>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
 
         {peerTyping && (
           <div className="flex justify-start">
-            <div className="flex items-center gap-1 rounded-2xl bg-secondary px-4 py-2.5">
-              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.3s]" />
-              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.15s]" />
-              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground" />
+            <div className="flex items-center gap-1 rounded-3xl rounded-bl-lg bg-card px-4 py-3 shadow-sm">
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-coral [animation-delay:-0.3s]" />
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-coral [animation-delay:-0.15s]" />
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-coral" />
             </div>
           </div>
         )}
@@ -169,20 +182,21 @@ function ChatPage({ sessionId }: { sessionId: string }) {
       </div>
 
       {isEnded ? (
-        <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3">
+        <div className="flex items-center justify-between gap-3 bg-card px-4 py-4 shadow-[0_-2px_12px_-6px_rgba(43,36,32,0.12)]">
           <p className="text-sm text-muted-foreground">
             {endedReason === "peer_disconnected" ? "Your chat partner left." : "This chat has ended."}
           </p>
-          <button
+          <motion.button
+            whileTap={{ scale: 0.96 }}
             onClick={handleFindNewChat}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+            className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
           >
             Find new chat
-          </button>
+          </motion.button>
         </div>
       ) : (
-        <>
-          <div className="flex items-center gap-2 border-t border-border p-3">
+        <div className="bg-card pt-3 shadow-[0_-2px_12px_-6px_rgba(43,36,32,0.12)]">
+          <div className="flex items-center gap-2 px-4 pb-3">
             <input
               value={input}
               onChange={(e) => handleInputChange(e.target.value)}
@@ -193,33 +207,35 @@ function ChatPage({ sessionId }: { sessionId: string }) {
                 }
               }}
               placeholder="Type a message…"
-              className="h-11 flex-1 rounded-lg border border-border bg-background px-4 text-sm outline-none focus:border-primary"
+              className="h-12 flex-1 rounded-full bg-muted px-5 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring"
             />
-            <button
+            <motion.button
+              whileTap={{ scale: 0.9 }}
               onClick={handleSend}
               disabled={!input.trim()}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground disabled:opacity-50"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40"
             >
               <Send className="h-4 w-4" />
-            </button>
+            </motion.button>
           </div>
-          <div className="flex items-center justify-between gap-3 px-4 pb-3">
+          <div className="flex items-center justify-between gap-3 px-4 pb-4">
             <button
               onClick={() => setReportOpen(true)}
-              className="flex items-center gap-1.5 text-sm font-medium text-destructive hover:opacity-80"
+              className="flex items-center gap-1.5 text-sm font-semibold text-destructive"
             >
               <Flag className="h-4 w-4" />
               Report
             </button>
-            <button
+            <motion.button
+              whileTap={{ scale: 0.96 }}
               onClick={handleSkip}
-              className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium transition-colors hover:bg-secondary"
+              className="flex items-center gap-1.5 rounded-full bg-sage-light px-4 py-2 text-sm font-semibold text-foreground"
             >
               Next
               <ArrowRight className="h-4 w-4" />
-            </button>
+            </motion.button>
           </div>
-        </>
+        </div>
       )}
 
       <ReportDialog open={reportOpen} onOpenChange={setReportOpen} sessionId={sessionId} />
