@@ -53,7 +53,6 @@ export class AuthService {
       },
       update: {
         email: profile.email,
-        displayName: profile.displayName,
         lastLoginAt: new Date(),
       },
     });

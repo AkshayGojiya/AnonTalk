@@ -63,6 +63,8 @@ export class AuthController {
     return { accessToken, user: toCurrentUserDto(user) };
   }
 
+  // Higher ceiling: called silently every ~15min per active user, and shared campus IPs need headroom.
+  @Throttle({ default: { limit: 120, ttl: 60_000 } })
   @Post("refresh")
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const token = req.cookies?.["refresh_token"];
