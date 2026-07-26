@@ -15,6 +15,7 @@ import { useSocketContext } from "@/components/socket-provider";
 import { useAuthStore } from "@/store/auth-store";
 import { useChatStore } from "@/store/chat-store";
 import { useRequireAuth } from "@/hooks/use-require-auth";
+import { useKeyboardOpen } from "@/hooks/use-keyboard-open";
 import { PeerBadge } from "@/components/chat/peer-badge";
 import { ReportDialog } from "@/components/chat/report-dialog";
 import { cn } from "@/lib/utils";
@@ -44,7 +45,10 @@ function ChatPage({ sessionId }: { sessionId: string }) {
   const [input, setInput] = useState("");
   const [reportOpen, setReportOpen] = useState(false);
   // Hides the End Chat / Next row while the keyboard is open, to save space.
-  const [inputFocused, setInputFocused] = useState(false);
+  // Driven by the actual visual-viewport keyboard state, not input focus --
+  // dismissing the keyboard via its own dismiss button doesn't reliably blur
+  // the input on every mobile browser, so focus/blur alone missed that case.
+  const keyboardOpen = useKeyboardOpen();
 
   const threadRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -316,8 +320,6 @@ function ChatPage({ sessionId }: { sessionId: string }) {
                     handleSend();
                   }
                 }}
-                onFocus={() => setInputFocused(true)}
-                onBlur={() => setInputFocused(false)}
                 placeholder="Type a message…"
                 className="h-12 flex-1 rounded-full bg-secondary px-5 text-base outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring lg:h-14"
               />
@@ -335,7 +337,7 @@ function ChatPage({ sessionId }: { sessionId: string }) {
             <div
               className={cn(
                 "items-center gap-2.5 px-4 pt-1 lg:flex lg:gap-3.5 lg:px-4 lg:pt-4",
-                inputFocused ? "hidden" : "flex",
+                keyboardOpen ? "hidden" : "flex",
               )}
             >
               <motion.button

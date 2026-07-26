@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
 import { SocketProvider } from "@/components/socket-provider";
 import { ViewportHeightSync } from "@/components/viewport-height-sync";
+import { PinchZoomGuard } from "@/components/pinch-zoom-guard";
 import "./globals.css";
 
 const bricolage = Bricolage_Grotesque({
@@ -47,7 +48,14 @@ export default function RootLayout({
         style={{ height: "var(--app-vh, 100%)" }}
       >
         <ViewportHeightSync />
-        <SocketProvider>{children}</SocketProvider>
+        <PinchZoomGuard />
+        {/* Transform target for ViewportHeightSync -- kept as a wrapper
+            (not applied to body itself) so Radix/base-ui dialog portals,
+            which mount as siblings of this div directly under body, keep
+            their `fixed` positioning relative to the real viewport. */}
+        <div id="viewport-shell" className="flex flex-1 flex-col overflow-hidden">
+          <SocketProvider>{children}</SocketProvider>
+        </div>
       </body>
     </html>
   );
