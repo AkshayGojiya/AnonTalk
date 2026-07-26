@@ -153,6 +153,12 @@ function ChatPage({ sessionId }: { sessionId: string }) {
     router.replace("/queue");
   }
 
+  function handleEndChat() {
+    socket?.emit("end_chat", { sessionId });
+    clearMatch();
+    router.replace("/");
+  }
+
   function handleFindNewChat() {
     clearMatch();
     router.replace("/queue");
@@ -203,23 +209,13 @@ function ChatPage({ sessionId }: { sessionId: string }) {
       <div className="flex flex-1 flex-col overflow-hidden bg-background">
         <header className="flex items-center justify-between gap-3 border-b border-border bg-card px-4 py-3 lg:px-9 lg:py-5">
           {peer ? <PeerBadge peer={peer} /> : <div className="h-11" />}
-          <div className="flex items-center gap-2 lg:gap-2.5">
-            <button
-              onClick={() => setReportOpen(true)}
-              className="flex items-center gap-1.5 rounded-full bg-orange-light px-3.5 py-2 text-sm font-bold text-orange lg:px-5 lg:py-2.5"
-            >
-              <Flag className="h-3.5 w-3.5" />
-              Report
-            </button>
-            <motion.button
-              whileTap={{ scale: 0.96 }}
-              onClick={handleSkip}
-              className="flex items-center gap-1.5 rounded-full bg-foreground px-3.5 py-2 text-sm font-bold text-background lg:px-5 lg:py-2.5"
-            >
-              Next
-              <ArrowRight className="h-3.5 w-3.5" />
-            </motion.button>
-          </div>
+          <button
+            onClick={() => setReportOpen(true)}
+            className="flex items-center gap-1.5 rounded-full bg-orange-light px-3.5 py-2 text-sm font-bold text-orange lg:px-5 lg:py-2.5"
+          >
+            <Flag className="h-3.5 w-3.5" />
+            Report
+          </button>
         </header>
 
         <div className="flex flex-1 flex-col gap-2.5 overflow-y-auto px-4 py-5 lg:px-9 lg:py-7">
@@ -271,7 +267,11 @@ function ChatPage({ sessionId }: { sessionId: string }) {
         {isEnded ? (
           <div className="flex items-center justify-between gap-3 border-t border-border bg-card px-4 py-4 lg:px-9 lg:py-6">
             <p className="text-sm text-muted-foreground">
-              {endedReason === "peer_disconnected" ? "Your chat partner left." : "This chat has ended."}
+              {endedReason === "left"
+                ? "Your chat partner ended the chat."
+                : endedReason === "peer_disconnected"
+                  ? "Your chat partner left."
+                  : "This chat has ended."}
             </p>
             <motion.button
               whileTap={{ scale: 0.96 }}
@@ -282,7 +282,7 @@ function ChatPage({ sessionId }: { sessionId: string }) {
             </motion.button>
           </div>
         ) : (
-          <div className="border-t border-border bg-card pt-3 lg:px-5 lg:pt-4 lg:pb-5">
+          <div className="border-t border-border bg-card pt-3 pb-4 lg:px-5 lg:pt-4 lg:pb-5">
             <div className="flex items-center gap-2.5 px-4 pb-3 lg:gap-3.5 lg:px-4 lg:pb-0">
               <input
                 ref={inputRef}
@@ -305,6 +305,24 @@ function ChatPage({ sessionId }: { sessionId: string }) {
                 className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-cobalt text-cobalt-foreground disabled:opacity-40 lg:h-14 lg:w-14"
               >
                 <Send className="h-4 w-4" />
+              </motion.button>
+            </div>
+
+            <div className="flex items-center gap-2.5 px-4 pt-1 lg:gap-3.5 lg:px-4 lg:pt-4">
+              <motion.button
+                whileTap={{ scale: 0.96 }}
+                onClick={handleEndChat}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-border py-3 text-sm font-bold text-muted-foreground lg:py-3.5"
+              >
+                End Chat
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.96 }}
+                onClick={handleSkip}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-foreground py-3 text-sm font-bold text-background lg:py-3.5"
+              >
+                Next
+                <ArrowRight className="h-3.5 w-3.5" />
               </motion.button>
             </div>
           </div>

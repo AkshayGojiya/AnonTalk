@@ -7,6 +7,7 @@ export const ChatClientEvent = {
   LEAVE_QUEUE: "leave_queue",
   CHECK_SESSION: "check_session",
   SKIP: "skip",
+  END_CHAT: "end_chat",
   SEND_MESSAGE: "send_message",
   TYPING_START: "typing_start",
   TYPING_STOP: "typing_stop",
@@ -35,6 +36,11 @@ export const skipPayloadSchema = z.object({
   sessionId: z.string(),
 });
 export type SkipPayload = z.infer<typeof skipPayloadSchema>;
+
+export const endChatPayloadSchema = z.object({
+  sessionId: z.string(),
+});
+export type EndChatPayload = z.infer<typeof endChatPayloadSchema>;
 
 export const sendMessagePayloadSchema = z.object({
   sessionId: z.string(),
@@ -82,6 +88,7 @@ export const sessionEndedPayloadSchema = z.object({
   sessionId: z.string(),
   reason: z.enum([
     SessionEndReason.SKIP,
+    SessionEndReason.LEFT,
     SessionEndReason.PEER_DISCONNECTED,
     SessionEndReason.REPORTED,
     SessionEndReason.MODERATION_BAN,
@@ -117,6 +124,7 @@ export interface ClientToServerEvents {
   [ChatClientEvent.LEAVE_QUEUE]: () => void;
   [ChatClientEvent.CHECK_SESSION]: () => void;
   [ChatClientEvent.SKIP]: (payload: SkipPayload) => void;
+  [ChatClientEvent.END_CHAT]: (payload: EndChatPayload) => void;
   [ChatClientEvent.SEND_MESSAGE]: (payload: SendMessagePayload) => void;
   [ChatClientEvent.TYPING_START]: (payload: TypingPayload) => void;
   [ChatClientEvent.TYPING_STOP]: (payload: TypingPayload) => void;

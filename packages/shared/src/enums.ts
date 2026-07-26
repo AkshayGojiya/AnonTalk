@@ -89,6 +89,7 @@ export type ModerationActionType = (typeof ModerationActionType)[keyof typeof Mo
 
 export const SessionEndReason = {
   SKIP: "skip",
+  LEFT: "left",
   PEER_DISCONNECTED: "peer_disconnected",
   REPORTED: "reported",
   MODERATION_BAN: "moderation_ban",

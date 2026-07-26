@@ -59,6 +59,7 @@ export default function QueuePage() {
           <motion.span
             key={i}
             className="absolute inset-0 rounded-full bg-white/15"
+            style={{ willChange: "transform, opacity", backfaceVisibility: "hidden" }}
             animate={{ scale: [0.6, 1.7], opacity: [0.9, 0] }}
             transition={{ duration: 2.8, repeat: Infinity, delay: i * 0.9, ease: "easeOut" }}
           />
@@ -66,6 +67,7 @@ export default function QueuePage() {
         <motion.div
           animate={{ y: [0, -7, 0] }}
           transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+          style={{ willChange: "transform", backfaceVisibility: "hidden" }}
           className="relative flex h-16 w-16 items-center justify-center gap-1 rounded-full bg-orange text-orange-foreground shadow-[0_10px_30px_rgba(255,90,31,.45)] lg:h-28 lg:w-28"
         >
           <MessagesSquare className="h-6 w-6 lg:h-9 lg:w-9" strokeWidth={1.75} />
@@ -89,7 +91,7 @@ export default function QueuePage() {
             <motion.span
               key={i}
               className="w-1 rounded-full bg-white lg:w-1.5"
-              style={{ height: h }}
+              style={{ height: h, willChange: "transform", backfaceVisibility: "hidden" }}
               animate={{ scaleY: [0.4, 1, 0.4] }}
               transition={{ duration: 1 + (i % 3) * 0.2, repeat: Infinity, delay: i * 0.06, ease: "easeInOut" }}
             />

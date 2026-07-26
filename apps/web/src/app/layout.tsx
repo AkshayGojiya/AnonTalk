@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
 import { SocketProvider } from "@/components/socket-provider";
 import "./globals.css";
@@ -18,6 +18,19 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "AnonTalk",
   description: "Verified Students. Real Conversations.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // Without this, mobile browsers keep the layout viewport full-height and
+  // just pan the visual viewport to reveal a focused input above the
+  // keyboard -- which drags our fixed header along with it since the pan
+  // isn't a DOM scroll our overflow-hidden rules can contain. Resizing the
+  // layout viewport itself instead means our flex column (header / scroll
+  // region / input) reflows to the smaller height, so the header and input
+  // bar stay pinned exactly where they are.
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({

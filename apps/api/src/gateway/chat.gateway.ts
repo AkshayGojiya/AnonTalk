@@ -16,6 +16,7 @@ import {
   UserStatus,
   joinQueuePayloadSchema,
   skipPayloadSchema,
+  endChatPayloadSchema,
   sendMessagePayloadSchema,
   typingPayloadSchema,
 } from "@anontalk/shared";
@@ -171,9 +172,34 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
       return;
     }
 
-    const user = await this.usersService.updateMode(socket.data.user.id, parsed.data.mode);
-    socket.data.user = user;
-    await this.attemptMatchOrQueue(user, socket);
+    // A user can already have a live session by the time this arrives (e.g. the
+    // Queue page's mount-triggered join_queue landing just after a skip already
+    // matched them via the peer's own re-queue) -- resync to the real session
+    // instead of letting them queue again, which would otherwise leave a phantom
+    // queue entry that later matches someone else with a user who's already paired up.
+    const existingSessionId = await this.sessionsService.getSessionIdForUser(socket.data.user.id);
+    if (existingSessionId) {
+      await this.emitCurrentSession(socket.data.user.id, socket, existingSessionId);
+      return;
+    }
+
+    // Two join_queue calls for the same user can still overlap in-flight (the
+    // check above and session creation below aren't atomic with each other) --
+    // e.g. the client firing an extra join_queue right as an earlier one is
+    // mid-match. A short lock makes only one attemptMatchOrQueue run at a time
+    // per user, so the second call can't slip in and enqueue a duplicate/phantom
+    // entry between the first call's session-check and its session-create.
+    const lockKey = `matching-lock:${socket.data.user.id}`;
+    const acquired = await this.redis.set(lockKey, "1", "EX", 5, "NX");
+    if (!acquired) return;
+
+    try {
+      const user = await this.usersService.updateMode(socket.data.user.id, parsed.data.mode);
+      socket.data.user = user;
+      await this.attemptMatchOrQueue(user, socket);
+    } finally {
+      await this.redis.del(lockKey);
+    }
   }
 
   @SubscribeMessage(ChatClientEvent.LEAVE_QUEUE)
@@ -206,17 +232,43 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
       return;
     }
 
-    const user = socket.data.user;
-    const activeSessionId = await this.sessionsService.getSessionIdForUser(user.id);
+    const activeSessionId = await this.sessionsService.getSessionIdForUser(socket.data.user.id);
     if (activeSessionId !== parsed.data.sessionId) {
       socket.emit(ChatServerEvent.ERROR, { code: "not_in_session", message: "Not part of this session" });
       return;
     }
 
     socket.leave(room(parsed.data.sessionId));
+    // Don't also re-queue the initiator here: their client navigates to /queue
+    // right after this emit, which mounts the Queue page and sends its own
+    // join_queue -- symmetric with how the peer re-queues on their side. Doing
+    // both would race (this call and the client's own join_queue landing back
+    // to back), and since a "matched" outcome here never sets this user's own
+    // queue member key, the second call could re-enqueue them as a phantom
+    // entry even though they're already paired up.
     await this.sessionsService.endSessionAndNotify(parsed.data.sessionId, SessionEndReason.SKIP);
+  }
 
-    await this.attemptMatchOrQueue(user, socket);
+  @SubscribeMessage(ChatClientEvent.END_CHAT)
+  async handleEndChat(@ConnectedSocket() socket: AuthenticatedSocket, @MessageBody() body: unknown) {
+    const parsed = endChatPayloadSchema.safeParse(body);
+    if (!parsed.success) {
+      socket.emit(ChatServerEvent.ERROR, { code: "invalid_payload", message: "Invalid end_chat payload" });
+      return;
+    }
+
+    const activeSessionId = await this.sessionsService.getSessionIdForUser(socket.data.user.id);
+    if (activeSessionId !== parsed.data.sessionId) {
+      socket.emit(ChatServerEvent.ERROR, { code: "not_in_session", message: "Not part of this session" });
+      return;
+    }
+
+    // Unlike skip, the initiator is heading home, not back into the queue --
+    // no re-match attempt for them. The peer gets a `left` (not `skip`)
+    // session_ended, which the client shows as an ended screen instead of
+    // auto-requeuing, since only one side chose to leave.
+    socket.leave(room(parsed.data.sessionId));
+    await this.sessionsService.endSessionAndNotify(parsed.data.sessionId, SessionEndReason.LEFT);
   }
 
   @SubscribeMessage(ChatClientEvent.SEND_MESSAGE)
