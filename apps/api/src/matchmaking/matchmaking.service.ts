@@ -11,14 +11,9 @@ function memberKey(userId: string) {
   return `queue:member:${userId}`;
 }
 
-// Atomically: skip past self/blocked/already-in-a-session candidates (discarding
-// stale ones, re-queueing valid skips), pop a valid match if one exists, else
-// enqueue self. Avoids double-queueing via the per-user member key, and refuses
-// to queue/match anyone (self or candidate) who already has a live session --
-// two overlapping join_queue calls for the same user (e.g. a server-triggered
-// requeue racing the client's own Queue-page-mount emit) could otherwise leave
-// a phantom queue entry for someone who's already paired up, which a totally
-// unrelated third user would then be wrongly matched with later.
+// Atomically skips self/blocked/already-in-a-session candidates, pops a match
+// if one exists, else enqueues self. Refuses to queue/match anyone who
+// already has a live session, to avoid phantom re-matches.
 const JOIN_OR_MATCH_SCRIPT = `
 local queueKey = KEYS[1]
 local memberKey = KEYS[2]
@@ -49,9 +44,7 @@ for i = 1, maxAttempts do
   elseif redis.call('SISMEMBER', blocklistKey, candidate) == 1 then
     table.insert(skipped, candidate)
   elseif redis.call('EXISTS', 'session:by-user:' .. candidate) == 1 then
-    -- Stale entry: this candidate is already in a live session elsewhere.
-    -- Discard rather than re-queue -- putting them back would just perpetuate
-    -- the same phantom-match risk for the next person who queues.
+    -- Stale entry already in a live session elsewhere; discard, don't re-queue.
     redis.call('DEL', 'queue:member:' .. candidate)
   else
     matchedId = candidate

@@ -172,23 +172,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
       return;
     }
 
-    // A user can already have a live session by the time this arrives (e.g. the
-    // Queue page's mount-triggered join_queue landing just after a skip already
-    // matched them via the peer's own re-queue) -- resync to the real session
-    // instead of letting them queue again, which would otherwise leave a phantom
-    // queue entry that later matches someone else with a user who's already paired up.
+    // Resync instead of re-queueing if this user already has a live session.
     const existingSessionId = await this.sessionsService.getSessionIdForUser(socket.data.user.id);
     if (existingSessionId) {
       await this.emitCurrentSession(socket.data.user.id, socket, existingSessionId);
       return;
     }
 
-    // Two join_queue calls for the same user can still overlap in-flight (the
-    // check above and session creation below aren't atomic with each other) --
-    // e.g. the client firing an extra join_queue right as an earlier one is
-    // mid-match. A short lock makes only one attemptMatchOrQueue run at a time
-    // per user, so the second call can't slip in and enqueue a duplicate/phantom
-    // entry between the first call's session-check and its session-create.
+    // Lock so two overlapping join_queue calls for the same user can't race
+    // between this check and session creation below.
     const lockKey = `matching-lock:${socket.data.user.id}`;
     const acquired = await this.redis.set(lockKey, "1", "EX", 5, "NX");
     if (!acquired) return;

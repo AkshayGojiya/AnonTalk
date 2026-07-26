@@ -43,14 +43,10 @@ function ChatPage({ sessionId }: { sessionId: string }) {
   const [endedReason, setEndedReason] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [reportOpen, setReportOpen] = useState(false);
-  // Hides the End Chat / Next row while the message input is focused (mobile
-  // keyboard open) -- frees up the vertical space the keyboard eats into,
-  // since browsers that don't resize the layout viewport for the keyboard
-  // (see interactiveWidget in layout.tsx) would otherwise push the header
-  // off-screen trying to keep both the input and these buttons in view.
+  // Hides the End Chat / Next row while the keyboard is open, to save space.
   const [inputFocused, setInputFocused] = useState(false);
 
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTypingRef = useRef(false);
@@ -119,9 +115,27 @@ function ChatPage({ sessionId }: { sessionId: string }) {
     };
   }, [socket, sessionId, setMatch, router, peer, clearMatch]);
 
+  function scrollThreadToBottom(smooth: boolean) {
+    const el = threadRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "auto" });
+  }
+
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    scrollThreadToBottom(true);
   }, [messages, peerTyping]);
+
+  // Rescroll to bottom whenever the thread's own size changes (keyboard
+  // open/close), not just on new messages. Depends on `ready` (not `[]`) --
+  // useRequireAuth renders nothing until verified, so threadRef is still null
+  // on the first effect run.
+  useEffect(() => {
+    const el = threadRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => scrollThreadToBottom(false));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [ready]);
 
   function stopTyping() {
     if (!isTypingRef.current || !socket) return;
@@ -224,7 +238,7 @@ function ChatPage({ sessionId }: { sessionId: string }) {
           </button>
         </header>
 
-        <div className="flex flex-1 flex-col gap-2.5 overflow-y-auto px-4 py-5 lg:px-9 lg:py-7">
+        <div ref={threadRef} className="flex flex-1 flex-col gap-2.5 overflow-y-auto px-4 py-5 lg:px-9 lg:py-7">
           {messages.length === 0 && !isEnded && (
             <div className="flex flex-1 flex-col items-center justify-center gap-1 text-center text-muted-foreground">
               <p className="font-heading font-extrabold text-foreground">Start the conversation!</p>
@@ -267,7 +281,6 @@ function ChatPage({ sessionId }: { sessionId: string }) {
               </div>
             </div>
           )}
-          <div ref={bottomRef} />
         </div>
 
         {isEnded ? (
