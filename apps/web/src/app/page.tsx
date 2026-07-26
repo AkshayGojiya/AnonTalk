@@ -7,6 +7,7 @@ import { ArrowRight, ShieldCheck, EyeOff, Ban, UserCog } from "lucide-react";
 import type { OnlineCountPayload } from "@anontalk/shared";
 import { useAuthStore } from "@/store/auth-store";
 import { useSocketContext } from "@/components/socket-provider";
+import { Toast } from "@/components/toast";
 
 const FEATURES = [
   {
@@ -32,6 +33,8 @@ const FEATURES = [
 export default function Home() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const justLoggedIn = useAuthStore((s) => s.justLoggedIn);
+  const clearJustLoggedIn = useAuthStore((s) => s.clearJustLoggedIn);
   const socket = useSocketContext();
   const [onlineCount, setOnlineCount] = useState<number | null>(null);
 
@@ -45,6 +48,12 @@ export default function Home() {
       socket.off("online_count", handleOnlineCount);
     };
   }, [socket]);
+
+  useEffect(() => {
+    if (!justLoggedIn) return;
+    const timer = setTimeout(() => clearJustLoggedIn(), 2500);
+    return () => clearTimeout(timer);
+  }, [justLoggedIn, clearJustLoggedIn]);
 
   function handleStartChat() {
     if (!user) {
@@ -133,6 +142,8 @@ export default function Home() {
           ))}
         </div>
       </div>
+
+      <Toast show={justLoggedIn} message="Logged in successfully" />
     </div>
   );
 }

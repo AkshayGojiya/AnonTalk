@@ -44,10 +44,10 @@ export function ReportDialog({ open, onOpenChange, sessionId }: ReportDialogProp
         <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-foreground/50 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0" />
         <DialogPrimitive.Popup
           className={cn(
-            "fixed z-50 flex flex-col gap-5 bg-card outline-none",
+            "fixed z-50 flex max-h-[85vh] flex-col gap-5 overflow-y-auto bg-card outline-none",
             "inset-x-0 bottom-0 rounded-t-3xl p-6 pb-8",
             "data-open:animate-in data-open:slide-in-from-bottom data-closed:animate-out data-closed:slide-out-to-bottom",
-            "lg:inset-x-auto lg:inset-y-auto lg:top-1/2 lg:left-1/2 lg:w-[620px] lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-3xl lg:p-10",
+            "lg:inset-x-auto lg:inset-y-auto lg:top-1/2 lg:left-1/2 lg:w-[620px] lg:max-h-[85vh] lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-3xl lg:p-10",
             "lg:data-open:zoom-in-95 lg:data-closed:zoom-out-95 lg:data-open:slide-in-from-bottom-0 lg:data-closed:slide-out-to-bottom-0",
           )}
         >

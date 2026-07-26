@@ -45,7 +45,7 @@ export default function IdentityPage() {
             submitLabel="Continue"
             onSaved={(updated) => {
               setUser(updated);
-              router.push("/queue");
+              router.push("/");
             }}
           />
         </motion.div>

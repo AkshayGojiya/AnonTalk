@@ -71,6 +71,15 @@ function ChatPage({ sessionId }: { sessionId: string }) {
     }
     function handleSessionEnded(payload: SessionEndedPayload) {
       if (payload.sessionId !== sessionId) return;
+      if (payload.reason === "skip") {
+        // Whoever clicked Next already left+requeued themselves client-side;
+        // the peer gets no say in it either -- both sides land back in the
+        // queue automatically rather than the peer needing to click through
+        // a "chat ended" screen first.
+        clearMatch();
+        router.replace("/queue");
+        return;
+      }
       setEndedReason(payload.reason);
     }
     function handlePeerReconnected(payload: { sessionId: string }) {
@@ -101,7 +110,7 @@ function ChatPage({ sessionId }: { sessionId: string }) {
       socket.off("peer_reconnected", handlePeerReconnected);
       socket.off("error", handleError);
     };
-  }, [socket, sessionId, setMatch, router, peer]);
+  }, [socket, sessionId, setMatch, router, peer, clearMatch]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

@@ -2,17 +2,27 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, LogOut } from "lucide-react";
+import { apiFetch } from "@/lib/api";
 import { useAuthStore } from "@/store/auth-store";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { ProfileForm } from "@/components/profile-form";
+import { Toast } from "@/components/toast";
 
 export default function ProfilePage() {
   const router = useRouter();
   const { user, ready } = useRequireAuth();
   const setUser = useAuthStore((s) => s.setUser);
+  const clear = useAuthStore((s) => s.clear);
   const [showSaved, setShowSaved] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    await apiFetch("/auth/logout", { method: "POST" }).catch(() => {});
+    clear();
+    router.push("/login");
+  }
 
   if (!ready) return null;
 
@@ -48,36 +58,7 @@ export default function ProfilePage() {
         </div>
 
         <div className="flex w-full max-w-3xl flex-col gap-8 lg:rounded-3xl lg:bg-card lg:p-14 lg:shadow-[0_16px_44px_-16px_rgba(10,10,20,.18)]">
-          <div className="hidden items-center justify-between lg:flex">
-            <h1 className="font-heading text-4xl font-extrabold tracking-tight">Edit your details</h1>
-            <AnimatePresence>
-              {showSaved && (
-                <motion.div
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  className="flex items-center gap-2 rounded-full bg-success-light px-4 py-2.5"
-                >
-                  <CheckCircle2 className="h-4 w-4 text-success" />
-                  <span className="text-sm font-bold text-success-text">Changes saved</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <AnimatePresence>
-            {showSaved && (
-              <motion.div
-                initial={{ opacity: 0, y: -6, height: 0 }}
-                animate={{ opacity: 1, y: 0, height: "auto" }}
-                exit={{ opacity: 0, y: -6, height: 0 }}
-                className="flex items-center gap-2.5 rounded-2xl bg-success-light px-4 py-3.5 lg:hidden"
-              >
-                <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
-                <span className="text-sm font-bold text-success-text">Changes saved</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <h1 className="hidden font-heading text-4xl font-extrabold tracking-tight lg:block">Edit your details</h1>
 
           <ProfileForm
             initialUser={user}
@@ -89,8 +70,20 @@ export default function ProfilePage() {
               setTimeout(() => setShowSaved(false), 2500);
             }}
           />
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className="flex items-center justify-center gap-2 rounded-full border border-border py-3.5 text-sm font-bold text-muted-foreground disabled:opacity-60 lg:self-start lg:px-7"
+          >
+            <LogOut className="h-4 w-4" strokeWidth={2} />
+            Log out
+          </button>
         </div>
       </div>
+
+      <Toast show={showSaved} message="Profile updated" />
     </div>
   );
 }
