@@ -238,7 +238,10 @@ function ChatPage({ sessionId }: { sessionId: string }) {
           </button>
         </header>
 
-        <div ref={threadRef} className="flex flex-1 flex-col gap-2.5 overflow-y-auto px-4 py-5 lg:px-9 lg:py-7">
+        <div
+          ref={threadRef}
+          className="flex flex-1 flex-col gap-2.5 overflow-y-auto overscroll-y-contain px-4 py-5 lg:px-9 lg:py-7"
+        >
           {messages.length === 0 && !isEnded && (
             <div className="flex flex-1 flex-col items-center justify-center gap-1 text-center text-muted-foreground">
               <p className="font-heading font-extrabold text-foreground">Start the conversation!</p>

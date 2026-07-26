@@ -24,6 +24,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   // Chromium-only opt-in; Safari doesn't implement interactive-widget at all
   // (ViewportHeightSync is the real cross-browser fix).
   interactiveWidget: "resizes-content",
