@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
 import { SocketProvider } from "@/components/socket-provider";
+import { ViewportHeightSync } from "@/components/viewport-height-sync";
 import "./globals.css";
 
 const bricolage = Bricolage_Grotesque({
@@ -39,14 +40,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${bricolage.variable} ${jetbrainsMono.variable} h-full overflow-hidden antialiased`}>
-      {/* h-full + overflow-hidden here (not min-h-full) is deliberate: it caps
-          the page to exactly the viewport so the document itself never grows
-          or scrolls. Each page is responsible for its own single internal
-          scroll region (header/input bars stay outside it, pinned by normal
-          flex layout) -- without this cap, a page with more content than fits
-          on screen just grows the whole document instead. */}
-      <body className="flex h-full flex-col overflow-hidden overscroll-none bg-background text-foreground">
+    <html
+      lang="en"
+      className={`${bricolage.variable} ${jetbrainsMono.variable} overflow-hidden antialiased`}
+      style={{ height: "var(--app-vh, 100%)" }}
+    >
+      {/* height: var(--app-vh, 100%) + overflow-hidden here (not min-h-full) is
+          deliberate: it caps the page to exactly the visible viewport so the
+          document itself never grows or scrolls. --app-vh (set by
+          ViewportHeightSync from visualViewport.height) keeps that cap correct
+          even when a mobile keyboard is open and shrinks what's actually
+          visible; 100% is the fallback before that JS runs. Each page is
+          responsible for its own single internal scroll region (header/input
+          bars stay outside it, pinned by normal flex layout) -- without this
+          cap, a page with more content than fits on screen just grows the
+          whole document instead. */}
+      <body
+        className="flex flex-col overflow-hidden overscroll-none bg-background text-foreground"
+        style={{ height: "var(--app-vh, 100%)" }}
+      >
+        <ViewportHeightSync />
         <SocketProvider>{children}</SocketProvider>
       </body>
     </html>

@@ -43,6 +43,12 @@ function ChatPage({ sessionId }: { sessionId: string }) {
   const [endedReason, setEndedReason] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [reportOpen, setReportOpen] = useState(false);
+  // Hides the End Chat / Next row while the message input is focused (mobile
+  // keyboard open) -- frees up the vertical space the keyboard eats into,
+  // since browsers that don't resize the layout viewport for the keyboard
+  // (see interactiveWidget in layout.tsx) would otherwise push the header
+  // off-screen trying to keep both the input and these buttons in view.
+  const [inputFocused, setInputFocused] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -294,6 +300,8 @@ function ChatPage({ sessionId }: { sessionId: string }) {
                     handleSend();
                   }
                 }}
+                onFocus={() => setInputFocused(true)}
+                onBlur={() => setInputFocused(false)}
                 placeholder="Type a message…"
                 className="h-12 flex-1 rounded-full bg-secondary px-5 text-base outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring lg:h-14"
               />
@@ -308,7 +316,12 @@ function ChatPage({ sessionId }: { sessionId: string }) {
               </motion.button>
             </div>
 
-            <div className="flex items-center gap-2.5 px-4 pt-1 lg:gap-3.5 lg:px-4 lg:pt-4">
+            <div
+              className={cn(
+                "items-center gap-2.5 px-4 pt-1 lg:flex lg:gap-3.5 lg:px-4 lg:pt-4",
+                inputFocused ? "hidden" : "flex",
+              )}
+            >
               <motion.button
                 whileTap={{ scale: 0.96 }}
                 onClick={handleEndChat}
