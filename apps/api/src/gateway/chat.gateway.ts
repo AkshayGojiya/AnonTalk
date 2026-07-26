@@ -38,6 +38,11 @@ const JOIN_QUEUE_WINDOW_SECONDS = 5;
 const SEND_MESSAGE_LIMIT = 20;
 const SEND_MESSAGE_WINDOW_SECONDS = 10;
 
+// A Redis Set (not a plain counter) so multiple tabs/devices for the same user
+// only count once, and a disconnect from one of several sockets doesn't
+// decrement the count until the user has truly left.
+const ONLINE_USERS_KEY = "online:users";
+
 function room(sessionId: string) {
   return `session:${sessionId}`;
 }
@@ -90,7 +95,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
       return;
     }
 
-    this.registerSocket(user.id, socket);
+    const isFirstSocketForUser = this.registerSocket(user.id, socket);
+    if (isFirstSocketForUser) {
+      const count = await this.redis.sadd(ONLINE_USERS_KEY, user.id);
+      if (count > 0) await this.broadcastOnlineCount();
+    }
+    socket.emit(ChatServerEvent.ONLINE_COUNT, { count: await this.redis.scard(ONLINE_USERS_KEY) });
 
     const sessionId = await this.sessionsService.getSessionIdForUser(user.id);
     if (!sessionId) return;
@@ -101,6 +111,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     if (!emitted) return;
 
     this.server.to(room(sessionId)).emit(ChatServerEvent.PEER_RECONNECTED, { sessionId });
+  }
+
+  private async broadcastOnlineCount() {
+    const count = await this.redis.scard(ONLINE_USERS_KEY);
+    this.server.emit(ChatServerEvent.ONLINE_COUNT, { count });
   }
 
   /** Looks up `sessionId`'s hash and, if it still exists, joins the socket to its
@@ -126,6 +141,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 
     this.unregisterSocket(user.id, socket);
     if (this.userSockets.has(user.id)) return; // user still has other live connections
+
+    await this.redis.srem(ONLINE_USERS_KEY, user.id);
+    await this.broadcastOnlineCount();
 
     const sessionId = await this.sessionsService.getSessionIdForUser(user.id);
     if (sessionId) {
@@ -354,13 +372,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     }
   }
 
-  private registerSocket(userId: string, socket: AuthenticatedSocket) {
+  /** Returns true when this is the user's first live socket (i.e. they were
+   * offline a moment ago), so callers can tell when the online count changed. */
+  private registerSocket(userId: string, socket: AuthenticatedSocket): boolean {
     const existing = this.userSockets.get(userId);
     if (existing) {
       existing.add(socket);
-    } else {
-      this.userSockets.set(userId, new Set([socket]));
+      return false;
     }
+    this.userSockets.set(userId, new Set([socket]));
+    return true;
   }
 
   private unregisterSocket(userId: string, socket: AuthenticatedSocket) {

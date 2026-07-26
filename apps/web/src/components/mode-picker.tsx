@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { Check, Ghost, User as UserIcon } from "lucide-react";
 import type { UserMode } from "@anontalk/shared";
 import { cn } from "@/lib/utils";
@@ -10,62 +9,63 @@ const MODE_OPTIONS: Array<{
   title: string;
   description: string;
   icon: typeof Ghost;
-  tone: "sage" | "coral";
+  tone: "cobalt" | "orange";
 }> = [
   {
     mode: "ANONYMOUS",
     title: "Anonymous",
-    description: "Only your display name is shown. No dept or year.",
+    description: "Only your display name is shown to partners.",
     icon: Ghost,
-    tone: "sage",
+    tone: "cobalt",
   },
   {
     mode: "REAL",
     title: "Real Profile",
-    description: "Shows your display name, dept & year.",
+    description: "Display name + dept + year shown.",
     icon: UserIcon,
-    tone: "coral",
+    tone: "orange",
   },
 ];
 
 export function ModePicker({ value, onChange }: { value: UserMode; onChange: (mode: UserMode) => void }) {
   return (
-    <div className="grid w-full grid-cols-2 gap-3">
-      {MODE_OPTIONS.map(({ mode, title, description, icon: Icon, tone }, i) => {
+    <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
+      {MODE_OPTIONS.map(({ mode, title, description, icon: Icon, tone }) => {
         const selected = value === mode;
         return (
-          <motion.button
+          <button
             key={mode}
             type="button"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.1 + i * 0.08 }}
-            whileTap={{ scale: 0.97 }}
             onClick={() => onChange(mode)}
             className={cn(
-              "relative flex min-h-[10.5rem] flex-col items-start gap-4 rounded-2xl p-5 text-left transition-shadow",
-              tone === "sage" ? "bg-sage-light" : "bg-coral-light",
-              selected ? "shadow-[0_0_0_3px_var(--foreground)]" : "shadow-none",
+              "relative flex items-start gap-4 rounded-2xl p-5 text-left transition-colors",
+              selected
+                ? tone === "cobalt"
+                  ? "bg-cobalt text-cobalt-foreground"
+                  : "bg-orange text-orange-foreground"
+                : "border border-border bg-card text-foreground",
             )}
           >
-            {selected && (
-              <span className="absolute top-4 right-4 flex h-5 w-5 items-center justify-center rounded-full bg-foreground">
-                <Check className="h-3 w-3 text-background" strokeWidth={3} />
-              </span>
-            )}
-            <div
+            <span
               className={cn(
-                "flex h-11 w-11 shrink-0 items-center justify-center rounded-full",
-                tone === "sage" ? "bg-sage text-sage-foreground" : "bg-coral text-coral-foreground",
+                "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+                selected ? "bg-white/20" : "bg-muted text-muted-foreground",
               )}
             >
-              <Icon className="h-5 w-5" strokeWidth={1.75} />
-            </div>
-            <div className="mt-auto">
-              <p className="font-heading text-sm font-bold">{title}</p>
-              <p className="mt-1 text-xs leading-snug text-muted-foreground">{description}</p>
-            </div>
-          </motion.button>
+              <Icon className="h-4 w-4" strokeWidth={1.75} />
+            </span>
+            <span className="flex flex-col gap-1">
+              <span className="font-heading text-base font-extrabold">{title}</span>
+              <span className={cn("text-sm leading-snug", selected ? "text-white/85" : "text-muted-foreground")}>
+                {description}
+              </span>
+            </span>
+            {selected && (
+              <span className="absolute top-4 right-4 flex h-5 w-5 items-center justify-center rounded-full bg-white/25">
+                <Check className="h-3 w-3" strokeWidth={3} />
+              </span>
+            )}
+          </button>
         );
       })}
     </div>

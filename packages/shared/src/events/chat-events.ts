@@ -21,6 +21,7 @@ export const ChatServerEvent = {
   PEER_RECONNECTED: "peer_reconnected",
   FORCE_LOGOUT: "force_logout",
   ERROR: "error",
+  ONLINE_COUNT: "online_count",
 } as const;
 
 // ---- Client -> Server payloads ----
@@ -104,6 +105,11 @@ export const errorPayloadSchema = z.object({
 });
 export type ErrorPayload = z.infer<typeof errorPayloadSchema>;
 
+export const onlineCountPayloadSchema = z.object({
+  count: z.number(),
+});
+export type OnlineCountPayload = z.infer<typeof onlineCountPayloadSchema>;
+
 // ---- Typed event maps (for Socket.IO server/client generics) ----
 
 export interface ClientToServerEvents {
@@ -125,4 +131,5 @@ export interface ServerToClientEvents {
   [ChatServerEvent.PEER_RECONNECTED]: (payload: PeerReconnectedPayload) => void;
   [ChatServerEvent.FORCE_LOGOUT]: (payload: ForceLogoutPayload) => void;
   [ChatServerEvent.ERROR]: (payload: ErrorPayload) => void;
+  [ChatServerEvent.ONLINE_COUNT]: (payload: OnlineCountPayload) => void;
 }
