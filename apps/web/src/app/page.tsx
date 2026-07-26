@@ -8,6 +8,7 @@ import type { OnlineCountPayload } from "@anontalk/shared";
 import { useAuthStore } from "@/store/auth-store";
 import { useSocketContext } from "@/components/socket-provider";
 import { Toast } from "@/components/toast";
+import { Logo } from "@/components/logo";
 
 const FEATURES = [
   {
@@ -66,12 +67,9 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex flex-1 flex-col overflow-y-auto overscroll-none">
       <header className="flex items-center justify-between px-6 py-5 lg:px-14 lg:py-6">
-        <div className="flex items-center gap-3">
-          <span className="h-8 w-8 rounded-full bg-cobalt lg:h-8 lg:w-8" />
-          <span className="font-heading text-lg font-extrabold tracking-tight">AnonTalk</span>
-        </div>
+        <Logo />
         {user && (
           <button
             onClick={() => router.push("/profile")}

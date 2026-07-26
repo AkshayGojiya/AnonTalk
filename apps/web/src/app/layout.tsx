@@ -26,8 +26,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${bricolage.variable} ${jetbrainsMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+    <html lang="en" className={`${bricolage.variable} ${jetbrainsMono.variable} h-full overflow-hidden antialiased`}>
+      {/* h-full + overflow-hidden here (not min-h-full) is deliberate: it caps
+          the page to exactly the viewport so the document itself never grows
+          or scrolls. Each page is responsible for its own single internal
+          scroll region (header/input bars stay outside it, pinned by normal
+          flex layout) -- without this cap, a page with more content than fits
+          on screen just grows the whole document instead. */}
+      <body className="flex h-full flex-col overflow-hidden overscroll-none bg-background text-foreground">
         <SocketProvider>{children}</SocketProvider>
       </body>
     </html>

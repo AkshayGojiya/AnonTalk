@@ -27,18 +27,18 @@ export default function ProfilePage() {
   if (!ready) return null;
 
   return (
-    <div className="flex flex-1 flex-col lg:bg-secondary">
-      <header className="hidden items-center justify-between border-b border-border bg-card px-14 py-6 lg:flex">
-        <div className="flex items-center gap-4">
+    <div className="flex flex-1 flex-col overflow-hidden lg:bg-secondary">
+      <header className="flex items-center justify-between border-b border-border bg-card px-6 py-5 lg:px-14 lg:py-6">
+        <div className="flex items-center gap-3 lg:gap-4">
           <button
             onClick={() => router.push("/")}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary lg:h-9 lg:w-9"
           >
             <ArrowLeft className="h-4 w-4" strokeWidth={2} />
           </button>
-          <span className="font-heading text-lg font-extrabold tracking-tight">Your profile</span>
+          <h1 className="font-heading text-lg font-extrabold tracking-tight">Your profile</h1>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="hidden items-center gap-4 lg:flex">
           <span className="text-sm font-semibold text-muted-foreground">{user?.email}</span>
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground text-sm font-extrabold text-background">
             {user?.displayName?.[0]?.toUpperCase()}
@@ -46,17 +46,7 @@ export default function ProfilePage() {
         </div>
       </header>
 
-      <div className="flex flex-1 flex-col px-6 py-10 lg:items-center lg:justify-center lg:px-10 lg:py-12">
-        <div className="mb-6 flex items-center gap-3 lg:hidden">
-          <button
-            onClick={() => router.push("/")}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary"
-          >
-            <ArrowLeft className="h-4 w-4" strokeWidth={2} />
-          </button>
-          <h1 className="font-heading text-2xl font-extrabold tracking-tight">Your profile</h1>
-        </div>
-
+      <div className="flex flex-1 flex-col overflow-y-auto overscroll-none px-6 py-10 lg:items-center lg:justify-center lg:px-10 lg:py-12">
         <div className="flex w-full max-w-3xl flex-col gap-8 lg:rounded-3xl lg:bg-card lg:p-14 lg:shadow-[0_16px_44px_-16px_rgba(10,10,20,.18)]">
           <h1 className="hidden font-heading text-4xl font-extrabold tracking-tight lg:block">Edit your details</h1>
 

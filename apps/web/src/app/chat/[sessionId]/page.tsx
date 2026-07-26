@@ -45,6 +45,7 @@ function ChatPage({ sessionId }: { sessionId: string }) {
   const [reportOpen, setReportOpen] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTypingRef = useRef(false);
 
@@ -141,6 +142,9 @@ function ChatPage({ sessionId }: { sessionId: string }) {
     setInput("");
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     stopTyping();
+    // Sending shouldn't close the mobile keyboard -- re-focus in case the
+    // send button (or the Enter keypress's default handling) took it away.
+    inputRef.current?.focus();
   }
 
   function handleSkip() {
@@ -159,8 +163,8 @@ function ChatPage({ sessionId }: { sessionId: string }) {
   if (!ready) return null;
 
   return (
-    <div className="flex flex-1 lg:bg-secondary">
-      <aside className="hidden w-[300px] shrink-0 flex-col gap-6 border-r border-border bg-secondary p-6 lg:flex">
+    <div className="flex flex-1 overflow-hidden lg:bg-secondary">
+      <aside className="hidden w-[300px] shrink-0 flex-col gap-6 overflow-y-auto border-r border-border bg-secondary p-6 lg:flex">
         <div className="flex items-center gap-3">
           <span className="h-7 w-7 rounded-full bg-cobalt" />
           <span className="font-heading text-lg font-extrabold tracking-tight">AnonTalk</span>
@@ -196,7 +200,7 @@ function ChatPage({ sessionId }: { sessionId: string }) {
         </button>
       </aside>
 
-      <div className="flex flex-1 flex-col bg-background">
+      <div className="flex flex-1 flex-col overflow-hidden bg-background">
         <header className="flex items-center justify-between gap-3 border-b border-border bg-card px-4 py-3 lg:px-9 lg:py-5">
           {peer ? <PeerBadge peer={peer} /> : <div className="h-11" />}
           <div className="flex items-center gap-2 lg:gap-2.5">
@@ -281,6 +285,7 @@ function ChatPage({ sessionId }: { sessionId: string }) {
           <div className="border-t border-border bg-card pt-3 lg:px-5 lg:pt-4 lg:pb-5">
             <div className="flex items-center gap-2.5 px-4 pb-3 lg:gap-3.5 lg:px-4 lg:pb-0">
               <input
+                ref={inputRef}
                 value={input}
                 onChange={(e) => handleInputChange(e.target.value)}
                 onKeyDown={(e) => {
@@ -290,10 +295,11 @@ function ChatPage({ sessionId }: { sessionId: string }) {
                   }
                 }}
                 placeholder="Type a message…"
-                className="h-12 flex-1 rounded-full bg-secondary px-5 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring lg:h-14 lg:text-base"
+                className="h-12 flex-1 rounded-full bg-secondary px-5 text-base outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring lg:h-14"
               />
               <motion.button
                 whileTap={{ scale: 0.9 }}
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={handleSend}
                 disabled={!input.trim()}
                 className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-cobalt text-cobalt-foreground disabled:opacity-40 lg:h-14 lg:w-14"

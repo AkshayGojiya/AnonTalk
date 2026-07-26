@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useAuthStore } from "@/store/auth-store";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { ProfileForm } from "@/components/profile-form";
+import { Logo } from "@/components/logo";
 
 export default function IdentityPage() {
   const router = useRouter();
@@ -14,16 +15,13 @@ export default function IdentityPage() {
   if (!ready) return null;
 
   return (
-    <div className="flex flex-1 flex-col lg:bg-secondary">
-      <header className="hidden items-center justify-between border-b border-border bg-card px-14 py-6 lg:flex">
-        <div className="flex items-center gap-3">
-          <span className="h-7 w-7 rounded-full bg-cobalt" />
-          <span className="font-heading text-lg font-extrabold tracking-tight">AnonTalk</span>
-        </div>
-        <span className="text-sm font-semibold text-muted-foreground">{user?.email}</span>
+    <div className="flex flex-1 flex-col overflow-hidden lg:bg-secondary">
+      <header className="flex items-center justify-between border-b border-border bg-card px-6 py-5 lg:px-14 lg:py-6">
+        <Logo />
+        <span className="hidden text-sm font-semibold text-muted-foreground lg:block">{user?.email}</span>
       </header>
 
-      <div className="flex flex-1 flex-col px-6 py-10 lg:items-center lg:justify-center lg:px-10 lg:py-12">
+      <div className="flex flex-1 flex-col overflow-y-auto overscroll-none px-6 py-10 lg:items-center lg:justify-center lg:px-10 lg:py-12">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}

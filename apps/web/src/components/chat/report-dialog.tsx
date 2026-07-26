@@ -98,7 +98,7 @@ export function ReportDialog({ open, onOpenChange, sessionId }: ReportDialogProp
             value={details}
             onChange={(e) => setDetails(e.target.value)}
             placeholder="Add details (optional)"
-            className="h-20 w-full rounded-lg border border-border bg-background px-4 py-3.5 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring"
+            className="h-20 w-full rounded-lg border border-border bg-background px-4 py-3.5 text-base outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring"
           />
 
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

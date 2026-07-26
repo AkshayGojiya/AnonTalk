@@ -9,6 +9,7 @@ import { useSocketContext } from "@/components/socket-provider";
 import { useAuthStore } from "@/store/auth-store";
 import { useChatStore } from "@/store/chat-store";
 import { useRequireAuth } from "@/hooks/use-require-auth";
+import { Logo } from "@/components/logo";
 
 const EQ_BARS = [10, 22, 14, 30, 18, 26, 12, 20, 16, 28, 10, 22];
 
@@ -49,6 +50,10 @@ export default function QueuePage() {
 
   return (
     <div className="relative flex flex-1 flex-col items-center justify-center gap-10 overflow-hidden bg-cobalt px-6 text-center text-cobalt-foreground lg:gap-16">
+      <div className="absolute top-6 left-6 z-10 lg:top-10 lg:left-10">
+        <Logo tone="white" />
+      </div>
+
       <div className="relative z-10 flex h-32 w-32 items-center justify-center lg:h-52 lg:w-52">
         {[0, 1, 2].map((i) => (
           <motion.span
