@@ -231,7 +231,7 @@ function ChatPage({ sessionId }: { sessionId: string }) {
       </aside>
 
       <div className="flex flex-1 flex-col overflow-hidden bg-background">
-        <header className="flex items-center justify-between gap-3 border-b border-border bg-card px-4 py-3 lg:px-9 lg:py-5">
+        <header className="flex touch-none items-center justify-between gap-3 border-b border-border bg-card px-4 py-3 lg:px-9 lg:py-5">
           {peer ? <PeerBadge peer={peer} /> : <div className="h-11" />}
           <button
             onClick={() => setReportOpen(true)}
@@ -244,7 +244,7 @@ function ChatPage({ sessionId }: { sessionId: string }) {
 
         <div
           ref={threadRef}
-          className="flex flex-1 flex-col gap-2.5 overflow-y-auto overscroll-y-contain px-4 py-5 lg:px-9 lg:py-7"
+          className="flex flex-1 touch-pan-y flex-col gap-2.5 overflow-y-auto overscroll-y-contain px-4 py-5 lg:px-9 lg:py-7"
         >
           {messages.length === 0 && !isEnded && (
             <div className="flex flex-1 flex-col items-center justify-center gap-1 text-center text-muted-foreground">
@@ -291,7 +291,7 @@ function ChatPage({ sessionId }: { sessionId: string }) {
         </div>
 
         {isEnded ? (
-          <div className="flex items-center justify-between gap-3 border-t border-border bg-card px-4 py-4 lg:px-9 lg:py-6">
+          <div className="flex touch-none items-center justify-between gap-3 border-t border-border bg-card px-4 py-4 lg:px-9 lg:py-6">
             <p className="text-sm text-muted-foreground">
               {endedReason === "left"
                 ? "Your chat partner ended the chat."
@@ -308,7 +308,7 @@ function ChatPage({ sessionId }: { sessionId: string }) {
             </motion.button>
           </div>
         ) : (
-          <div className="border-t border-border bg-card pt-3 pb-4 lg:px-5 lg:pt-4 lg:pb-5">
+          <div className="touch-none border-t border-border bg-card pt-3 pb-4 lg:px-5 lg:pt-4 lg:pb-5">
             <div className="flex items-center gap-2.5 px-4 pb-3 lg:gap-3.5 lg:px-4 lg:pb-0">
               <input
                 ref={inputRef}

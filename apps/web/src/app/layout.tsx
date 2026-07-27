@@ -44,7 +44,11 @@ export default function RootLayout({
       style={{ height: "var(--app-vh, 100%)" }}
     >
       <body
-        className="flex flex-col overflow-hidden overscroll-none bg-background text-foreground"
+        // `fixed` (not just overflow-hidden) removes body from iOS's page-scroll
+        // model entirely -- overflow-hidden alone still lets iOS pan the whole
+        // page to keep a focused input visible above the keyboard, even when
+        // there's no scrollable content anywhere on the page.
+        className="fixed inset-x-0 top-0 flex flex-col overflow-hidden overscroll-none bg-background text-foreground"
         style={{ height: "var(--app-vh, 100%)" }}
       >
         <ViewportHeightSync />
